@@ -1,9 +1,13 @@
 ﻿using BaboonAPI.Hooks.Initializer;
 using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using System.IO;
+using System.Collections;
 using TootTally.Utils;
+using TootTally.Utils.TootTallySettings;
+using UnityEngine;
 
 namespace TootTally.Twitch
 {
@@ -19,7 +23,9 @@ namespace TootTally.Twitch
         public ConfigEntry<bool> ModuleConfigEnabled { get; set; }
         public bool IsConfigInitialized { get; set; }
         public string Name { get => PluginInfo.PLUGIN_NAME; set => Name = value; }
+        public ManualLogSource GetLogger { get => Logger; }
         public string CurrentSong { get; internal set; }
+        private TwitchBot Bot = null;
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);
 
@@ -35,8 +41,6 @@ namespace TootTally.Twitch
         {
             // Bind to the TTModules Config for TootTally
             ModuleConfigEnabled = TootTally.Plugin.Instance.Config.Bind("Modules", "Twitch", true, "TootTally Twitch Integration");
-            // Attempt to add this module to the TTModules page in TrombSettings
-            if (TootTally.Plugin.Instance.moduleSettings != null) OptionalTrombSettings.Add(TootTally.Plugin.Instance.moduleSettings, ModuleConfigEnabled);
             TootTally.Plugin.AddModule(this);
 
             // Set CurrentSong to default value
@@ -45,6 +49,7 @@ namespace TootTally.Twitch
 
         public void LoadModule()
         {
+            string toottallyTwitchLink = "https://localhost/twitch/";
             string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
             ConfigFile config = new ConfigFile(configPath + CONFIG_NAME, true);
             option = new Options()
@@ -55,25 +60,45 @@ namespace TootTally.Twitch
                 EnableRequestsCommand = config.Bind(CONFIG_FIELD, "Enable requests command (!ttr)", true),
                 EnableCurrentSongCommand = config.Bind(CONFIG_FIELD, "Enable current song command (!song)", true),
                 EnableProfileCommand = config.Bind(CONFIG_FIELD, "Enable profile command (!profile)", true),
+                TwitchUsername = config.Bind(CONFIG_FIELD, "Twitch channel to attach to", ""),
+                TwitchAccessToken = config.Bind(CONFIG_FIELD, "Twitch Access Token", "")
             };
-
-            var settingsPage = OptionalTrombSettings.GetConfigPage("Twitch");
-            if (settingsPage != null) {
-                // Use OptionalTrombSettings to add your config to TrombSettings
-                // Example:
-                // OptionalTrombSettings.Add(settingsPage, option.Unlimited);
-                OptionalTrombSettings.Add(settingsPage, option.EnableRequestsCommand);
-                OptionalTrombSettings.Add(settingsPage, option.EnableCurrentSongCommand);
-                OptionalTrombSettings.Add(settingsPage, option.EnableProfileCommand);
+            
+            var settingsPage = TootTallySettingsManager.AddNewPage(CONFIG_FIELD, "Twitch Integration Settings", 40, new Color(.1f, .1f, .1f, .1f));
+            if (settingsPage != null)
+            {
+                settingsPage.AddToggle("EnableRequestsCommand", option.EnableRequestsCommand, (value) => {} );
+                settingsPage.AddToggle("EnableCurrentSongsCommand", option.EnableCurrentSongCommand, (value) => {});
+                settingsPage.AddToggle("EnableProfileCommand", option.EnableProfileCommand, (value) => {});
+                settingsPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 20); // 20 is the default size
+                var twitchUsernameTextField = settingsPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, "");
+                // twitchUsernameTextField.inputField.onValueChanged.AddListener(SetTwitchUsername);
+                var twitchAccessTokenTextField = settingsPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, "", true);
+                // twitchAccessTokenTextField.inputField.onValueChanged.AddListener(SetTwitchAccessToken);
+                settingsPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", delegate() { Application.OpenURL(toottallyTwitchLink); });
             }
 
             Harmony.CreateAndPatchAll(typeof(TwitchPatches), PluginInfo.PLUGIN_GUID);
             LogInfo($"Module loaded!");
         }
 
+        public void SetTwitchUsername(string text)
+        {
+            option.TwitchUsername.Value = text;
+        }
+
+        public void SetTwitchAccessToken(string text)
+        {
+            option.TwitchAccessToken.Value = text;
+        }
+
         public void UnloadModule()
         {
             Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
+            if (Plugin.Instance.Bot != null) {
+                Plugin.Instance.Bot.Disconnect();
+                Plugin.Instance.Bot = null;
+            }
             LogInfo($"Module unloaded!");
         }
 
@@ -93,6 +118,15 @@ namespace TootTally.Twitch
             {
                 Plugin.Instance.CurrentSong = "No song currently being played.";
             }
+            
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
+            [HarmonyPostfix]
+            public static void StartBot()
+            {
+                if (Plugin.Instance.Bot == null) {
+                    Plugin.Instance.Bot = new TwitchBot();
+                }
+            }
         }
 
         public class Options
@@ -104,7 +138,7 @@ namespace TootTally.Twitch
             public ConfigEntry<bool> EnableProfileCommand { get; set; }
             public ConfigEntry<bool> EnableCurrentSongCommand { get; set; }
             public ConfigEntry<string> TwitchUsername { get; set; }
-            public ConfigEntry<string> TwitchOAuthToken { get; set; }
+            public ConfigEntry<string> TwitchAccessToken { get; set; }
         }
     }
 }

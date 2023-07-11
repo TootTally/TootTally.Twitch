@@ -24,7 +24,8 @@ namespace TootTally.Twitch
 
         public TwitchBot()
         {
-            if (!GetAccessToken()) return;
+            if (!Initialize()) return;
+            Plugin.Instance.LogInfo($"Attempting connection with channel {CHANNEL} using token {ACCESS_TOKEN}");
             ConnectionCredentials credentials = new ConnectionCredentials(CHANNEL, ACCESS_TOKEN);
 	        var clientOptions = new ClientOptions
             {
@@ -48,7 +49,7 @@ namespace TootTally.Twitch
             if (client.IsConnected) client.Disconnect();
         }
 
-        private bool GetAccessToken()
+        private bool Initialize()
         {
             if (Plugin.Instance.option.TwitchAccessToken.Value == null || Plugin.Instance.option.TwitchAccessToken.Value == "") {
                 PopUpNotifManager.DisplayNotif("Twitch Access Token is empty. Please fill it in.", GameTheme.themeColors.notification.defaultText);
@@ -56,6 +57,7 @@ namespace TootTally.Twitch
             }
             // TODO: Check if ACCESS_TOKEN actually works
             ACCESS_TOKEN = Plugin.Instance.option.TwitchAccessToken.Value;
+            CHANNEL = Plugin.Instance.option.TwitchUsername.Value;
             return true;
         }
 

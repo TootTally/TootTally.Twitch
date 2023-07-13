@@ -101,6 +101,10 @@ namespace TootTally.Twitch
                     client.SendMessage(CHANNEL, $"Song ID {song_id} successfully requested.");
                     // TODO: This should somehow save into a panel that can be seen at the level select screen
                     //       Preferably, kind of like a drawer-type deal.
+                    Plugin.Request req = new Plugin.Request();
+                    req.requester = requester;
+                    req.songData = songdata;
+                    Plugin.Instance.Requests.Add(req);
                 }));
             }
             else {

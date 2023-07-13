@@ -5,6 +5,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 using TootTally.Utils;
 using TootTally.Utils.TootTallySettings;
 using TootTally.Graphics;
@@ -26,6 +27,7 @@ namespace TootTally.Twitch
         public string Name { get => PluginInfo.PLUGIN_NAME; set => Name = value; }
         public ManualLogSource GetLogger { get => Logger; }
         public string CurrentSong { get; internal set; }
+        public List<Request> Requests { get; set; }
         private TwitchBot Bot = null;
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);
@@ -154,6 +156,12 @@ namespace TootTally.Twitch
             public ConfigEntry<bool> EnableCurrentSongCommand { get; set; }
             public ConfigEntry<string> TwitchUsername { get; set; }
             public ConfigEntry<string> TwitchAccessToken { get; set; }
+        }
+
+        public class Request
+        {
+            public string requester;
+            public SerializableClass.SongDataFromDB songData;
         }
     }
 }

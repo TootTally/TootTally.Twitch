@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections;
 using TootTally.Utils;
 using TootTally.Utils.TootTallySettings;
+using TootTally.Graphics;
 using UnityEngine;
 
 namespace TootTally.Twitch
@@ -49,7 +50,7 @@ namespace TootTally.Twitch
 
         public void LoadModule()
         {
-            string toottallyTwitchLink = "https://localhost/twitch/";
+            string toottallyTwitchLink = "https://toottally.com/twitch/";
             string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
             ConfigFile config = new ConfigFile(configPath + CONFIG_NAME, true);
             option = new Options()
@@ -71,23 +72,37 @@ namespace TootTally.Twitch
                 settingsPage.AddToggle("EnableCurrentSongsCommand", option.EnableCurrentSongCommand, (value) => {});
                 settingsPage.AddToggle("EnableProfileCommand", option.EnableProfileCommand, (value) => {});
                 settingsPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 20); // 20 is the default size
-                var twitchUsernameTextField = settingsPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, "");
-                // twitchUsernameTextField.inputField.onValueChanged.AddListener(SetTwitchUsername);
-                var twitchAccessTokenTextField = settingsPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, "", true);
-                // twitchAccessTokenTextField.inputField.onValueChanged.AddListener(SetTwitchAccessToken);
+                settingsPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
+                settingsPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, true, SetTwitchAccessToken);
                 settingsPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", delegate() { Application.OpenURL(toottallyTwitchLink); });
+                settingsPage.AddButton("GetAccessToken", new Vector2(450, 50), "Refresh Access Token", delegate () {
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) => {
+                        option.TwitchAccessToken.Value = token_info.access_token;
+                        PopUpNotifManager.DisplayNotif("Access token successfully obtained", GameTheme.themeColors.notification.defaultText);
+                    }));
+                });
+                settingsPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 20);
+                settingsPage.AddButton("ConnectDisconnectBot", new Vector2(350, 50), "Connect/Disconnect Bot", () => {
+                    if (Plugin.Instance.Bot == null) {
+                        Plugin.Instance.Bot = new TwitchBot(); // Start and connect the bot if no bot detected yet
+                    }
+                    else {
+                        Plugin.Instance.Bot.Disconnect(); // Disconnect the current bot if it exists
+                    }
+                });
             }
 
             Harmony.CreateAndPatchAll(typeof(TwitchPatches), PluginInfo.PLUGIN_GUID);
             LogInfo($"Module loaded!");
         }
 
-        public void SetTwitchUsername(string text)
+        private void SetTwitchUsername(string text)
         {
             option.TwitchUsername.Value = text;
+            PopUpNotifManager.DisplayNotif($"Twitch username is set to '{text}'", GameTheme.themeColors.notification.defaultText);
         }
 
-        public void SetTwitchAccessToken(string text)
+        private void SetTwitchAccessToken(string text)
         {
             option.TwitchAccessToken.Value = text;
         }

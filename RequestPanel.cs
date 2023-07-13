@@ -6,12 +6,20 @@ using TootTally.Graphics.Animation;
 
 namespace TootTally.Twitch
 {
-    public class RequestPanel
+    public class RequestPanelManager
     {
-        
+        public void Initialize()
+        {
+
+        }
     }
 
     public class RequestPanelFactory
+    {
+
+    }
+
+    public class RequestPanel
     {
         
     }

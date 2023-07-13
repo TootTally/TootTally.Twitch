@@ -95,17 +95,20 @@ namespace TootTally.Twitch
         {
             int song_id;
             if (int.TryParse(arg, out song_id)) {
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(song_id, (songdata) => {
-                    Plugin.Instance.LogInfo($"Obtained request by {requester} for song {songdata.author} - {songdata.name}");
-                    PopUpNotifManager.DisplayNotif($"Requested song by {requester}: {songdata.author} - {songdata.name}", GameTheme.themeColors.notification.defaultText);
-                    client.SendMessage(CHANNEL, $"Song ID {song_id} successfully requested.");
-                    // TODO: This should somehow save into a panel that can be seen at the level select screen
-                    //       Preferably, kind of like a drawer-type deal.
-                    Plugin.Request req = new Plugin.Request();
-                    req.requester = requester;
-                    req.songData = songdata;
-                    Plugin.Instance.Requests.Add(req);
-                }));
+                if (!Plugin.Instance.RequesterBlacklist.Contains(requester) && !Plugin.Instance.SongIDBlacklist.Contains(song_id)) {
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(song_id, (songdata) => {
+                        Plugin.Instance.LogInfo($"Obtained request by {requester} for song {songdata.author} - {songdata.name}");
+                        PopUpNotifManager.DisplayNotif($"Requested song by {requester}: {songdata.author} - {songdata.name}", GameTheme.themeColors.notification.defaultText);
+                        client.SendMessage(CHANNEL, $"Song ID {song_id} successfully requested.");
+                        Plugin.Request req = new Plugin.Request();
+                        req.requester = requester;
+                        req.songData = songdata;
+                        Plugin.Instance.Requests.Add(req);
+                    }));
+                }
+                else {
+                    Plugin.Instance.LogInfo($"Request rejected.");
+                }
             }
             else {
                 client.SendMessage(CHANNEL, "Invalid song ID. Please try again.");

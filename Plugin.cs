@@ -28,6 +28,8 @@ namespace TootTally.Twitch
         public ManualLogSource GetLogger { get => Logger; }
         public string CurrentSong { get; internal set; }
         public List<Request> Requests { get; set; }
+        public List<string> RequesterBlacklist { get; set; }
+        public List<int> SongIDBlacklist { get; set; }
         private TwitchBot Bot = null;
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);

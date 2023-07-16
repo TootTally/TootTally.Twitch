@@ -59,7 +59,7 @@ namespace TootTally.Twitch
                 PopUpNotifManager.DisplayNotif("Twitch Username is empty. Please fill it in.", GameTheme.themeColors.notification.errorText);
                 return false;
             }
-            CHANNEL = Plugin.Instance.option.TwitchUsername.Value;
+            CHANNEL = Plugin.Instance.option.TwitchUsername.Value.ToLower();
             return true;
         }
 
@@ -103,6 +103,7 @@ namespace TootTally.Twitch
             int song_id;
             if (int.TryParse(arg, out song_id)) {
                 if (!Plugin.Instance.RequesterBlacklist.Contains(requester) && !Plugin.Instance.SongIDBlacklist.Contains(song_id)) {
+                    Plugin.Instance.LogInfo($"Received request for {song_id}, waiting for TootTally API to respond.");
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(song_id, (songdata) => {
                         Plugin.Instance.LogInfo($"Obtained request by {requester} for song {songdata.author} - {songdata.name}");
                         PopUpNotifManager.DisplayNotif($"Requested song by {requester}: {songdata.author} - {songdata.name}", GameTheme.themeColors.notification.defaultText);

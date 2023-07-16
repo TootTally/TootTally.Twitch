@@ -75,7 +75,7 @@ namespace TootTally.Twitch
                 settingsPage.AddToggle("EnableRequestsCommand", option.EnableRequestsCommand, (value) => {} );
                 settingsPage.AddToggle("EnableCurrentSongsCommand", option.EnableCurrentSongCommand, (value) => {});
                 settingsPage.AddToggle("EnableProfileCommand", option.EnableProfileCommand, (value) => {});
-                settingsPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 20); // 20 is the default size
+                settingsPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
                 settingsPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
                 settingsPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, true, SetTwitchAccessToken);
                 settingsPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", delegate() { Application.OpenURL(toottallyTwitchLink); });
@@ -85,15 +85,17 @@ namespace TootTally.Twitch
                         PopUpNotifManager.DisplayNotif("Access token successfully obtained", GameTheme.themeColors.notification.defaultText);
                     }));
                 });
-                settingsPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 20);
+                settingsPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 24);
                 settingsPage.AddButton("ConnectDisconnectBot", new Vector2(350, 50), "Connect/Disconnect Bot", () => {
                     if (Plugin.Instance.Bot == null) {
                         Plugin.Instance.Bot = new TwitchBot(); // Start and connect the bot if no bot detected yet
                     }
                     else {
                         Plugin.Instance.Bot.Disconnect(); // Disconnect the current bot if it exists
+                        Plugin.Instance.Bot = null;
                     }
                 });
+                settingsPage.AddLabel("TwitchBotInstruction", "Twitch bot will also automatically start when you enter the song select menu.", 16);
             }
 
             Harmony.CreateAndPatchAll(typeof(TwitchPatches), PluginInfo.PLUGIN_GUID);

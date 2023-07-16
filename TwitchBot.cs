@@ -37,6 +37,7 @@ namespace TootTally.Twitch
             client.OnJoinedChannel += Client_OnJoinedChannel;
             client.OnConnected += Client_OnConnected;
             client.OnChatCommandReceived += Client_HandleChatCommand;
+            client.OnIncorrectLogin += Client_OnIncorrectLogin;
 
             client.Connect();
         }
@@ -60,6 +61,12 @@ namespace TootTally.Twitch
             }
             CHANNEL = Plugin.Instance.option.TwitchUsername.Value;
             return true;
+        }
+
+        private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs args)
+        {
+            PopUpNotifManager.DisplayNotif("Login credentials incorrect. Please re-authorize and re-check your Twitch username.", GameTheme.themeColors.notification.errorText);
+            client.Disconnect();
         }
 
         private void Client_HandleChatCommand(object sender, OnChatCommandReceivedArgs args)
@@ -136,6 +143,7 @@ namespace TootTally.Twitch
         private void Client_OnDisconnected(object sender, OnDisconnectedArgs e)
         {
             Plugin.Instance.LogInfo("TwitchBot successfully disconnected from Twitch!");
+            PopUpNotifManager.DisplayNotif("Twitch bot disconnected!", GameTheme.themeColors.notification.defaultText);
         }
     }
 }

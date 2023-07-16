@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
@@ -7,8 +7,6 @@
 		<Version>1.0.0</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
-		<TromboneChampDir>E:\SteamLibrary\steamapps\common\TromboneChamp</TromboneChampDir>
-		<TromboneTootDir>C:\Users\Sabz\AppData\Roaming\r2modmanPlus-local\TromboneChamp\profiles\Default</TromboneTootDir>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -16,7 +14,7 @@
 		<PackageReference Include="BepInEx.Core" Version="5.*" />
 		<PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
 		<PackageReference Include="UnityEngine.Modules" Version="2019.3.11" IncludeAssets="compile" />
-		<PackageReference Include="TromboneChamp.GameLibs" Version="1.9.5" />
+		<PackageReference Include="TromboneChamp.GameLibs" Version="1.12.0-beta" />
 		<PackageReference Include="TromboneChamp.BaboonAPI" Version="2.2.0" />
 		<PackageReference Include="TromboneChamp.TrombLoader" Version="2.0.0-rc.1" />
 		<PackageReference Include="TwitchLib" Version="3.5.3" />
@@ -28,7 +26,7 @@
 
 	<ItemGroup>
 		<Reference Include="TootTally">
-			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTally\plugins\TootTally.dll</HintPath>
+			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTally\TootTally.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

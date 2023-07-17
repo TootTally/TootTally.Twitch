@@ -102,6 +102,9 @@ namespace TootTally.Twitch
 
             Plugin.Instance.NotifStack = new Stack<Notif>();
             Plugin.Instance.RequestStack = new Stack<UnprocessedRequest>();
+            Plugin.Instance.RequesterBlacklist = new List<string>();
+            Plugin.Instance.SongIDBlacklist = new List<int>();
+            Plugin.Instance.Requests = new List<Request>();
             Plugin.Instance.StartCoroutine(NotifCoroutine());
             Plugin.Instance.StartCoroutine(RequestCoroutine());
 
@@ -182,18 +185,18 @@ namespace TootTally.Twitch
         public void UnloadModule()
         {
             Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
-            if (Plugin.Instance.Bot != null) {
-                Plugin.Instance.Bot.Disconnect();
-                Plugin.Instance.Bot = null;
-            }
-            if (Plugin.Instance.NotifStack != null) {
-                Plugin.Instance.NotifStack.Clear();
-                Plugin.Instance.NotifStack = null;
-            }
-            if (Plugin.Instance.RequestStack != null) {
-                Plugin.Instance.RequestStack.Clear();
-                Plugin.Instance.RequestStack = null;
-            }
+            Plugin.Instance.Bot.Disconnect();
+            Plugin.Instance.Bot = null;
+            Plugin.Instance.NotifStack.Clear();
+            Plugin.Instance.NotifStack = null;
+            Plugin.Instance.RequestStack.Clear();
+            Plugin.Instance.RequestStack = null;
+            Plugin.Instance.RequesterBlacklist.Clear();
+            Plugin.Instance.RequesterBlacklist = null;
+            Plugin.Instance.SongIDBlacklist.Clear();
+            Plugin.Instance.SongIDBlacklist = null;
+            Plugin.Instance.Requests.Clear();
+            Plugin.Instance.Requests = null;
             Plugin.Instance.StopAllCoroutines();
             LogInfo($"Module unloaded!");
         }

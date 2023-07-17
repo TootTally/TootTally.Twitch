@@ -10,14 +10,16 @@ using TwitchLib.Client.Extensions;
 using TwitchLib.Client.Models;
 using TwitchLib.Communication.Clients;
 using TwitchLib.Communication.Models;
+using TwitchLib.Communication.Events;
 
 namespace TootTally.Twitch
 {
     class TwitchBot
     {
-        private TwitchClient client;
+        internal TwitchClient client;
         public string ACCESS_TOKEN { private get; set; }
-        public string CHANNEL { private get; set; }
+        public string CHANNEL { get; set; }
+        public Stack<string> MessageStack { get; set; }
 
         public TwitchBot()
         {
@@ -38,34 +40,44 @@ namespace TootTally.Twitch
             client.OnConnected += Client_OnConnected;
             client.OnChatCommandReceived += Client_HandleChatCommand;
             client.OnIncorrectLogin += Client_OnIncorrectLogin;
+            client.OnError += Client_OnError;
+
+            MessageStack = new Stack<string>();
 
             client.Connect();
         }
 
         public void Disconnect()
         {
-            if (client.IsConnected) client.Disconnect();
+            if (client != null && client.IsConnected) client.Disconnect();
+            MessageStack.Clear();
+            MessageStack = null;
         }
 
         private bool Initialize()
         {
             if (Plugin.Instance.option.TwitchAccessToken.Value == null || Plugin.Instance.option.TwitchAccessToken.Value == "") {
-                PopUpNotifManager.DisplayNotif("Twitch Access Token is empty. Please fill it in.", GameTheme.themeColors.notification.errorText);
+                Plugin.Instance.DisplayNotif("Twitch Access Token is empty. Please fill it in.", true);
                 return false;
             }
             // TODO: Check if ACCESS_TOKEN actually works
             ACCESS_TOKEN = Plugin.Instance.option.TwitchAccessToken.Value;
             if (Plugin.Instance.option.TwitchUsername.Value == null || Plugin.Instance.option.TwitchUsername.Value == "") {
-                PopUpNotifManager.DisplayNotif("Twitch Username is empty. Please fill it in.", GameTheme.themeColors.notification.errorText);
+                Plugin.Instance.DisplayNotif("Twitch Username is empty. Please fill it in.", true);
                 return false;
             }
             CHANNEL = Plugin.Instance.option.TwitchUsername.Value.ToLower();
             return true;
         }
 
+        private void Client_OnError(object sender, OnErrorEventArgs args)
+        {
+            Plugin.Instance.LogError($"{args.Exception.ToString()}\n{args.Exception.StackTrace}");
+        }
+
         private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs args)
         {
-            PopUpNotifManager.DisplayNotif("Login credentials incorrect. Please re-authorize and re-check your Twitch username.", GameTheme.themeColors.notification.errorText);
+            Plugin.Instance.DisplayNotif("Login credentials incorrect. Please re-authorize and re-check your Twitch username.", true);
             client.Disconnect();
         }
 
@@ -78,7 +90,15 @@ namespace TootTally.Twitch
                 case "ttr": // Request a song
                     if (Plugin.Instance.option.EnableRequestsCommand.Value) {
                         if (args.Command.ArgumentsAsList.Count == 1) {
-                            HandleRequestCommand(cmd_args, args.Command.ChatMessage.Username);
+                            int song_id;
+                            if (int.TryParse(cmd_args, out song_id)) {
+                                Plugin.Instance.LogInfo($"Successfully parsed request for {song_id}, submitting to stack.");
+                                Plugin.Instance.RequestSong(song_id, args.Command.ChatMessage.Username);
+                            }
+                            else {
+                                Plugin.Instance.LogInfo("Could not parse request input, ignoring.");
+                                client.SendMessage(CHANNEL, "Invalid song ID. Please try again.");
+                            }
                         }
                         else {
                             client.SendMessage(CHANNEL, $"Use !ttr to request a chart use its TootTally Song ID! (Example: !ttr 3781)");
@@ -90,36 +110,12 @@ namespace TootTally.Twitch
                         client.SendMessage(CHANNEL, $"TootTally Profile: https://toottally.com/profile/{TootTally.Plugin.userInfo.id}");
                     break;
                 case "song": // Get current song
-                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value)
+                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value) {
                         client.SendMessage(CHANNEL, $"Current Song: {Plugin.Instance.CurrentSong}");
+                    }
                     break;
                 default:
                     break;
-            }
-        }
-
-        private void HandleRequestCommand(string arg, string requester)
-        {
-            int song_id;
-            if (int.TryParse(arg, out song_id)) {
-                if (!Plugin.Instance.RequesterBlacklist.Contains(requester) && !Plugin.Instance.SongIDBlacklist.Contains(song_id)) {
-                    Plugin.Instance.LogInfo($"Received request for {song_id}, waiting for TootTally API to respond.");
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(song_id, (songdata) => {
-                        Plugin.Instance.LogInfo($"Obtained request by {requester} for song {songdata.author} - {songdata.name}");
-                        PopUpNotifManager.DisplayNotif($"Requested song by {requester}: {songdata.author} - {songdata.name}", GameTheme.themeColors.notification.defaultText);
-                        client.SendMessage(CHANNEL, $"Song ID {song_id} successfully requested.");
-                        Plugin.Request req = new Plugin.Request();
-                        req.requester = requester;
-                        req.songData = songdata;
-                        Plugin.Instance.Requests.Add(req);
-                    }));
-                }
-                else {
-                    Plugin.Instance.LogInfo($"Request rejected.");
-                }
-            }
-            else {
-                client.SendMessage(CHANNEL, "Invalid song ID. Please try again.");
             }
         }
 
@@ -136,7 +132,7 @@ namespace TootTally.Twitch
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
             client.SendMessage(e.Channel, "TootTally Twitch Integration ready!");
-            PopUpNotifManager.DisplayNotif("Twitch Integration successful!", GameTheme.themeColors.notification.defaultText);
+            Plugin.Instance.DisplayNotif("Twitch Integration successful!");
             Plugin.Instance.LogInfo("Twitch integration successfully attached to chat!");
             CHANNEL = e.Channel;
         }
@@ -144,7 +140,7 @@ namespace TootTally.Twitch
         private void Client_OnDisconnected(object sender, OnDisconnectedArgs e)
         {
             Plugin.Instance.LogInfo("TwitchBot successfully disconnected from Twitch!");
-            PopUpNotifManager.DisplayNotif("Twitch bot disconnected!", GameTheme.themeColors.notification.defaultText);
+            Plugin.Instance.DisplayNotif("Twitch bot disconnected!");
         }
     }
 }

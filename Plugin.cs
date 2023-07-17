@@ -27,10 +27,12 @@ namespace TootTally.Twitch
         public string Name { get => PluginInfo.PLUGIN_NAME; set => Name = value; }
         public ManualLogSource GetLogger { get => Logger; }
         public string CurrentSong { get; internal set; }
-        public List<Request> Requests { get; set; }
+        public List<Request> Requests { get; set; } // real requests queue
         public List<string> RequesterBlacklist { get; set; }
         public List<int> SongIDBlacklist { get; set; }
         private TwitchBot Bot = null;
+        private Stack<Notif> NotifStack;
+        private Stack<UnprocessedRequest> RequestStack; // Unfinished request stack, only song ids here
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);
 
@@ -82,7 +84,7 @@ namespace TootTally.Twitch
                 settingsPage.AddButton("GetAccessToken", new Vector2(450, 50), "Refresh Access Token", delegate () {
                     Plugin.Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) => {
                         option.TwitchAccessToken.Value = token_info.access_token;
-                        PopUpNotifManager.DisplayNotif("Access token successfully obtained", GameTheme.themeColors.notification.defaultText);
+                        Plugin.Instance.DisplayNotif("Access token successfully obtained");
                     }));
                 });
                 settingsPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 24);
@@ -98,6 +100,11 @@ namespace TootTally.Twitch
                 settingsPage.AddLabel("TwitchBotInstruction", "Twitch bot will also automatically start when you enter the song select menu.", 16);
             }
 
+            Plugin.Instance.NotifStack = new Stack<Notif>();
+            Plugin.Instance.RequestStack = new Stack<UnprocessedRequest>();
+            Plugin.Instance.StartCoroutine(NotifCoroutine());
+            Plugin.Instance.StartCoroutine(RequestCoroutine());
+
             Harmony.CreateAndPatchAll(typeof(TwitchPatches), PluginInfo.PLUGIN_GUID);
             LogInfo($"Module loaded!");
         }
@@ -105,12 +112,65 @@ namespace TootTally.Twitch
         private void SetTwitchUsername(string text)
         {
             option.TwitchUsername.Value = text;
-            PopUpNotifManager.DisplayNotif($"Twitch username is set to '{text}'", GameTheme.themeColors.notification.defaultText);
+            Plugin.Instance.DisplayNotif($"Twitch username is set to '{text}'");
         }
 
         private void SetTwitchAccessToken(string text)
         {
             option.TwitchAccessToken.Value = text;
+        }
+
+        public IEnumerator NotifCoroutine()
+        {
+            while (true) {
+                Notif notif;
+                if (Plugin.Instance.NotifStack.TryPop(out notif)) {
+                    Plugin.Instance.LogInfo("Attempting to generate notification...");
+                    PopUpNotifManager.DisplayNotif(notif.message, notif.color);
+                }
+                yield return null;
+            }
+        }
+
+        public IEnumerator RequestCoroutine()
+        {
+            while (true) {
+                UnprocessedRequest request;
+                if (Plugin.Instance.RequestStack.TryPop(out request)) {
+                    Plugin.Instance.LogInfo($"Attempting to get song data for ID {request.song_id}");
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(request.song_id, (songdata) => {
+                        Plugin.Instance.LogInfo($"Obtained request by {request.requester} for song {songdata.author} - {songdata.name}");
+                        Plugin.Instance.DisplayNotif($"Requested song by {request.requester}: {songdata.author} - {songdata.name}");
+                        Plugin.Instance.Bot.client.SendMessage(Plugin.Instance.Bot.CHANNEL, $"Song ID {request.song_id} successfully requested.");
+                        Request req = new Request();
+                        req.requester = request.requester;
+                        req.songData = songdata;
+                        Plugin.Instance.Requests.Add(req);
+                    }));
+                }
+                yield return null;
+            }
+        }
+
+        public void DisplayNotif(string message, bool isError=false)
+        {
+            Color color = isError ? GameTheme.themeColors.notification.errorText : GameTheme.themeColors.notification.defaultText;
+            Notif notif = new Notif();
+            notif.message = message;
+            notif.color = color;
+            Plugin.Instance.NotifStack.Push(notif);
+            // PopUpNotifManager.DisplayNotif(message, color);
+        }
+        
+        public void RequestSong(int song_id, string requester)
+        {
+            UnprocessedRequest request = new UnprocessedRequest();
+            if (!Plugin.Instance.RequesterBlacklist.Contains(requester) && !Plugin.Instance.SongIDBlacklist.Contains(song_id)) {
+                Plugin.Instance.LogInfo($"Accepted request {song_id} by {requester}.");
+                request.song_id = song_id;
+                request.requester = requester;
+                Plugin.Instance.RequestStack.Push(request);
+            }
         }
 
         public void UnloadModule()
@@ -120,6 +180,15 @@ namespace TootTally.Twitch
                 Plugin.Instance.Bot.Disconnect();
                 Plugin.Instance.Bot = null;
             }
+            if (Plugin.Instance.NotifStack != null) {
+                Plugin.Instance.NotifStack.Clear();
+                Plugin.Instance.NotifStack = null;
+            }
+            if (Plugin.Instance.RequestStack != null) {
+                Plugin.Instance.RequestStack.Clear();
+                Plugin.Instance.RequestStack = null;
+            }
+            Plugin.Instance.StopAllCoroutines();
             LogInfo($"Module unloaded!");
         }
 
@@ -166,6 +235,18 @@ namespace TootTally.Twitch
         {
             public string requester;
             public SerializableClass.SongDataFromDB songData;
+        }
+
+        public class UnprocessedRequest
+        {
+            public string requester;
+            public int song_id;
+        }
+
+        public class Notif
+        {
+            public string message;
+            public Color color;
         }
     }
 }

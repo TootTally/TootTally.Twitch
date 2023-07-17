@@ -90,7 +90,7 @@ namespace TootTally.Twitch
                 settingsPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 24);
                 settingsPage.AddButton("ConnectDisconnectBot", new Vector2(350, 50), "Connect/Disconnect Bot", () => {
                     if (Plugin.Instance.Bot == null) {
-                        Plugin.Instance.Bot = new TwitchBot(); // Start and connect the bot if no bot detected yet
+                        Plugin.Instance.StartCoroutine(StartBotCoroutine()); // Start and connect the bot if no bot detected yet
                     }
                     else {
                         Plugin.Instance.Bot.Disconnect(); // Disconnect the current bot if it exists
@@ -150,6 +150,12 @@ namespace TootTally.Twitch
                 }
                 yield return null;
             }
+        }
+
+        public IEnumerator StartBotCoroutine()
+        {
+            if (Plugin.Instance.Bot == null) Plugin.Instance.Bot = new TwitchBot();
+            yield return null;
         }
 
         public void DisplayNotif(string message, bool isError=false)
@@ -213,9 +219,7 @@ namespace TootTally.Twitch
             [HarmonyPostfix]
             public static void StartBot()
             {
-                if (Plugin.Instance.Bot == null) {
-                    Plugin.Instance.Bot = new TwitchBot();
-                }
+                Plugin.Instance.StartCoroutine(Plugin.Instance.StartBotCoroutine());
             }
         }
 

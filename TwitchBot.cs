@@ -29,7 +29,8 @@ namespace TootTally.Twitch
 	        var clientOptions = new ClientOptions
             {
                 MessagesAllowedInPeriod = 750,
-                ThrottlingPeriod = TimeSpan.FromSeconds(30)
+                ThrottlingPeriod = TimeSpan.FromSeconds(30),
+                ReconnectionPolicy = new ReconnectionPolicy(reconnectInterval: 5, maxAttempts: 3),
             };
             WebSocketClient customClient = new WebSocketClient(clientOptions);
             client = new TwitchClient(customClient);

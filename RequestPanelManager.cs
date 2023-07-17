@@ -13,6 +13,7 @@ namespace TootTally.Twitch
     {
         private static GameObject _overlayPanel;
         private static GameObject _overlayCanvas;
+        private static GameObject _overlayPanelContainer;
         private static bool _isPanelActive;
         private static bool _isInitialized;
         public static void Initialize()
@@ -30,6 +31,7 @@ namespace TootTally.Twitch
 
 
             _overlayPanel = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, scaler.referenceResolution, "TwitchOverlayPanel");
+            _overlayPanelContainer = _overlayPanel.transform.Find("FSLatencyPanel/LatencyFG/MainPage").gameObject;
             _overlayPanel.SetActive(false);
             _isPanelActive = false;
             _isInitialized = true;

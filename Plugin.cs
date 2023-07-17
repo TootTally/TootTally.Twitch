@@ -44,6 +44,11 @@ namespace TootTally.Twitch
             GameInitializationEvent.Register(Info, TryInitialize);
         }
 
+        private void Update()
+        {
+            RequestPanelManager.Update();
+        }
+
         private void TryInitialize()
         {
             // Bind to the TTModules Config for TootTally
@@ -185,6 +190,7 @@ namespace TootTally.Twitch
         public void UnloadModule()
         {
             Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
+            RequestPanelManager.Dispose();
             Plugin.Instance.Bot.Disconnect();
             Plugin.Instance.Bot = null;
             Plugin.Instance.NotifStack.Clear();
@@ -204,6 +210,17 @@ namespace TootTally.Twitch
         public static class TwitchPatches
         {
             // Apply your Trombone Champ patches here
+            [HarmonyPatch(typeof(GameObjectFactory), nameof(GameObjectFactory.OnHomeControllerInitialize))]
+            [HarmonyPostfix]
+            public static void InitializeRequestPanel()
+            {
+                RequestPanelManager.Initialize();
+            }
+
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.tryToSaveSettings))]
+            [HarmonyPostfix]
+            public static void InitializeRequestPanelOnSaveConfig() => InitializeRequestPanel();
+
             [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
             [HarmonyPostfix]
             public static void SetCurrentSong()

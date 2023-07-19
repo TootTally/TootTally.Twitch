@@ -99,9 +99,9 @@ namespace TootTally.Twitch
             }
         }
 
-        public static void AddRow(string songName, string charterName, string requestedByName)
+        public static void AddRow(SerializableClass.SongDataFromDB chart, Plugin.UnprocessedRequest request)
         {
-            _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, songName, charterName, requestedByName, DateTime.Now));
+            _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, chart, request, DateTime.Now));
         }
 
         public static void Dispose()

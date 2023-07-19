@@ -33,6 +33,7 @@ namespace TootTally.Twitch
         private TwitchBot Bot = null;
         private Stack<Notif> NotifStack;
         private Stack<UnprocessedRequest> RequestStack; // Unfinished request stack, only song ids here
+        private TootTallySettingPage _settingPage;
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);
 
@@ -40,7 +41,7 @@ namespace TootTally.Twitch
         {
             if (Instance != null) return;
             Instance = this;
-            
+
             GameInitializationEvent.Register(Info, TryInitialize);
         }
 
@@ -75,43 +76,48 @@ namespace TootTally.Twitch
                 TwitchUsername = config.Bind(CONFIG_FIELD, "Twitch channel to attach to", ""),
                 TwitchAccessToken = config.Bind(CONFIG_FIELD, "Twitch Access Token", "")
             };
-            
-            var settingsPage = TootTallySettingsManager.AddNewPage(CONFIG_FIELD, "Twitch Integration Settings", 40, new Color(.1f, .1f, .1f, .1f));
-            if (settingsPage != null)
+
+            _settingPage = TootTallySettingsManager.AddNewPage(CONFIG_FIELD, "Twitch Integration Settings", 40, new Color(.1f, .1f, .1f, .1f));
+            if (_settingPage != null)
             {
-                settingsPage.AddToggle("EnableRequestsCommand", option.EnableRequestsCommand, (value) => {} );
-                settingsPage.AddToggle("EnableCurrentSongsCommand", option.EnableCurrentSongCommand, (value) => {});
-                settingsPage.AddToggle("EnableProfileCommand", option.EnableProfileCommand, (value) => {});
-                settingsPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
-                settingsPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
-                settingsPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, true, SetTwitchAccessToken);
-                settingsPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", delegate() { Application.OpenURL(toottallyTwitchLink); });
-                settingsPage.AddButton("GetAccessToken", new Vector2(450, 50), "Refresh Access Token", delegate () {
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) => {
+                _settingPage.AddToggle("EnableRequestsCommand", option.EnableRequestsCommand, (value) => { });
+                _settingPage.AddToggle("EnableCurrentSongsCommand", option.EnableCurrentSongCommand, (value) => { });
+                _settingPage.AddToggle("EnableProfileCommand", option.EnableProfileCommand, (value) => { });
+                _settingPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
+                _settingPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
+                _settingPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, true, SetTwitchAccessToken);
+                _settingPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", delegate () { Application.OpenURL(toottallyTwitchLink); });
+                _settingPage.AddButton("GetAccessToken", new Vector2(450, 50), "Refresh Access Token", delegate ()
+                {
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) =>
+                    {
                         option.TwitchAccessToken.Value = token_info.access_token;
                         Plugin.Instance.DisplayNotif("Access token successfully obtained");
                     }));
                 });
-                settingsPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 24);
-                settingsPage.AddButton("ConnectDisconnectBot", new Vector2(350, 50), "Connect/Disconnect Bot", () => {
-                    if (Plugin.Instance.Bot == null) {
+                _settingPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 24);
+                _settingPage.AddButton("ConnectDisconnectBot", new Vector2(350, 50), "Connect/Disconnect Bot", () =>
+                {
+                    if (Plugin.Instance.Bot == null)
+                    {
                         Plugin.Instance.StartCoroutine(StartBotCoroutine()); // Start and connect the bot if no bot detected yet
                     }
-                    else {
+                    else
+                    {
                         Plugin.Instance.Bot.Disconnect(); // Disconnect the current bot if it exists
                         Plugin.Instance.Bot = null;
                     }
                 });
-                settingsPage.AddLabel("TwitchBotInstruction", "Twitch bot will also automatically start when you enter the song select menu.", 16);
+                _settingPage.AddLabel("TwitchBotInstruction", "Twitch bot will also automatically start when you enter the song select menu.", 16);
             }
 
-            Plugin.Instance.NotifStack = new Stack<Notif>();
-            Plugin.Instance.RequestStack = new Stack<UnprocessedRequest>();
-            Plugin.Instance.RequesterBlacklist = new List<string>();
-            Plugin.Instance.SongIDBlacklist = new List<int>();
-            Plugin.Instance.Requests = new List<Request>();
-            Plugin.Instance.StartCoroutine(NotifCoroutine());
-            Plugin.Instance.StartCoroutine(RequestCoroutine());
+            NotifStack = new Stack<Notif>();
+            RequestStack = new Stack<UnprocessedRequest>();
+            RequesterBlacklist = new List<string>();
+            SongIDBlacklist = new List<int>();
+            Requests = new List<Request>();
+            StartCoroutine(NotifCoroutine());
+            StartCoroutine(RequestCoroutine());
 
             Harmony.CreateAndPatchAll(typeof(TwitchPatches), PluginInfo.PLUGIN_GUID);
             LogInfo($"Module loaded!");
@@ -130,9 +136,11 @@ namespace TootTally.Twitch
 
         public IEnumerator NotifCoroutine()
         {
-            while (true) {
+            while (true)
+            {
                 Notif notif;
-                if (Plugin.Instance.NotifStack.TryPop(out notif)) {
+                if (Plugin.Instance.NotifStack.TryPop(out notif))
+                {
                     Plugin.Instance.LogInfo("Attempting to generate notification...");
                     PopUpNotifManager.DisplayNotif(notif.message, notif.color);
                 }
@@ -142,11 +150,14 @@ namespace TootTally.Twitch
 
         public IEnumerator RequestCoroutine()
         {
-            while (true) {
+            while (true)
+            {
                 UnprocessedRequest request;
-                if (Plugin.Instance.RequestStack.TryPop(out request)) {
+                if (Plugin.Instance.RequestStack.TryPop(out request))
+                {
                     Plugin.Instance.LogInfo($"Attempting to get song data for ID {request.song_id}");
-                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(request.song_id, (songdata) => {
+                    Plugin.Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(request.song_id, (songdata) =>
+                    {
                         Plugin.Instance.LogInfo($"Obtained request by {request.requester} for song {songdata.author} - {songdata.name}");
                         Plugin.Instance.DisplayNotif($"Requested song by {request.requester}: {songdata.author} - {songdata.name}");
                         RequestPanelManager.AddRow(songdata, request);
@@ -163,7 +174,7 @@ namespace TootTally.Twitch
             yield return null;
         }
 
-        public void DisplayNotif(string message, bool isError=false)
+        public void DisplayNotif(string message, bool isError = false)
         {
             Color color = isError ? GameTheme.themeColors.notification.errorText : GameTheme.themeColors.notification.defaultText;
             Notif notif = new Notif();
@@ -172,11 +183,12 @@ namespace TootTally.Twitch
             Plugin.Instance.NotifStack.Push(notif);
             // PopUpNotifManager.DisplayNotif(message, color);
         }
-        
+
         public void RequestSong(int song_id, string requester)
         {
             UnprocessedRequest request = new UnprocessedRequest();
-            if (!Plugin.Instance.RequesterBlacklist.Contains(requester) && !Plugin.Instance.SongIDBlacklist.Contains(song_id)) {
+            if (!Plugin.Instance.RequesterBlacklist.Contains(requester) && !Plugin.Instance.SongIDBlacklist.Contains(song_id))
+            {
                 Plugin.Instance.LogInfo($"Accepted request {song_id} by {requester}.");
                 request.song_id = song_id;
                 request.requester = requester;
@@ -186,21 +198,25 @@ namespace TootTally.Twitch
 
         public void UnloadModule()
         {
-            Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
             RequestPanelManager.Dispose();
-            Plugin.Instance.Bot.Disconnect();
-            Plugin.Instance.Bot = null;
-            Plugin.Instance.NotifStack.Clear();
-            Plugin.Instance.NotifStack = null;
-            Plugin.Instance.RequestStack.Clear();
-            Plugin.Instance.RequestStack = null;
-            Plugin.Instance.RequesterBlacklist.Clear();
-            Plugin.Instance.RequesterBlacklist = null;
-            Plugin.Instance.SongIDBlacklist.Clear();
-            Plugin.Instance.SongIDBlacklist = null;
-            Plugin.Instance.Requests.Clear();
-            Plugin.Instance.Requests = null;
-            Plugin.Instance.StopAllCoroutines();
+            TootTallySettingsManager.RemovePage(_settingPage);
+            if (Bot != null)
+            {
+                Bot.Disconnect();
+                Bot = null;
+            }
+            NotifStack.Clear();
+            NotifStack = null;
+            RequestStack.Clear();
+            RequestStack = null;
+            RequesterBlacklist.Clear();
+            RequesterBlacklist = null;
+            SongIDBlacklist.Clear();
+            SongIDBlacklist = null;
+            Requests.Clear();
+            Requests = null;
+            StopAllCoroutines();
+            Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
             LogInfo($"Module unloaded!");
         }
 
@@ -231,7 +247,7 @@ namespace TootTally.Twitch
             {
                 Plugin.Instance.CurrentSong = "No song currently being played.";
             }
-            
+
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
             public static void StartBot()

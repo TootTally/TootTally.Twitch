@@ -107,6 +107,7 @@ namespace TootTally.Twitch
 
             GameObject.DestroyImmediate(_overlayCanvas);
             GameObject.DestroyImmediate(_overlayPanel);
+            _isInitialized = false;
         }
 
         public static void Remove(RequestPanelRow row)

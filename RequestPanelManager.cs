@@ -39,12 +39,17 @@ namespace TootTally.Twitch
             _overlayPanel = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1700, 900), 20f, "TwitchOverlayPanel");
             _overlayPanelContainer = _overlayPanel.transform.Find("FSLatencyPanel/LatencyFG/MainPage").gameObject;
             _containerRect = _overlayPanelContainer.GetComponent<RectTransform>();
+            _containerRect.anchoredPosition = Vector2.zero;
+            _containerRect.sizeDelta = new Vector2(1700, 900);
             var verticalLayout = _overlayPanelContainer.GetComponent<VerticalLayoutGroup>();
             verticalLayout.padding = new RectOffset(20, 20, 20, 20);
             verticalLayout.spacing = 120f;
             verticalLayout.childAlignment = TextAnchor.UpperCenter;
             verticalLayout.childControlHeight = verticalLayout.childControlWidth = true;
             _overlayPanelContainer.transform.parent.gameObject.AddComponent<Mask>();
+            GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "subtitle");
+            GameObjectFactory.DestroyFromParent(_overlayPanelContainer.transform.parent.gameObject, "title");
+            GameObjectFactory.CreateSingleText(_overlayPanelContainer.transform, "title", "Twitch Requests", GameTheme.themeColors.leaderboard.text);
             _overlayPanel.SetActive(false);
             SetRequestRowPrefab();
 
@@ -60,10 +65,10 @@ namespace TootTally.Twitch
                 TogglePanel();
 
             if (Input.GetKeyUp(KeyCode.F7))
-                _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, "Test", "TestCharter", DateTime.Now));
+                _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, "Test", "TestCharter", "Requested by grist", DateTime.Now));
 
-            if (_isPanelActive && Input.mouseScrollDelta.y != 0 && _requestRowList.Count >= 7)
-                _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(_containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 25f, MIN_POS_Y, (_requestRowList.Count - 7f) * 120f));
+            if (_isPanelActive && Input.mouseScrollDelta.y != 0 && _requestRowList.Count >= 6)
+                _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(_containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 25f, MIN_POS_Y, ((_requestRowList.Count - 6f) * 120f) + 120f));
         }
 
         public static void TogglePanel()
@@ -84,7 +89,7 @@ namespace TootTally.Twitch
         public static void SetRequestRowPrefab()
         {
             
-            var tempRow = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(900,100), 5f, $"TwitchRequestRowTemp").transform.Find("FSLatencyPanel").gameObject;
+            var tempRow = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1200,100), 5f, $"TwitchRequestRowTemp").transform.Find("FSLatencyPanel").gameObject;
             requestRowPrefab = GameObject.Instantiate(tempRow);
             GameObject.DestroyImmediate(tempRow.gameObject);
 
@@ -93,11 +98,21 @@ namespace TootTally.Twitch
 
             requestRowPrefab.GetComponent<Image>().maskable = true;
             var container = requestRowPrefab.transform.Find("LatencyFG/MainPage").gameObject;
+            container.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            container.GetComponent<RectTransform>().sizeDelta = new Vector2(1200, 100);
+            GameObject.DestroyImmediate(container.transform.parent.Find("subtitle").gameObject);
+            GameObject.DestroyImmediate(container.transform.parent.Find("title").gameObject);
             GameObject.DestroyImmediate(container.GetComponent<VerticalLayoutGroup>());
-            container.AddComponent<HorizontalLayoutGroup>();
+            var horizontalLayoutGroup = container.AddComponent<HorizontalLayoutGroup>();
+            horizontalLayoutGroup.padding = new RectOffset(20, 20, 20, 20);
+            horizontalLayoutGroup.spacing = 20f;
+            horizontalLayoutGroup.childAlignment = TextAnchor.UpperLeft;
+            /*horizontalLayoutGroup.childControlHeight = horizontalLayoutGroup.childControlWidth = false;
+            horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = true;
+            horizontalLayoutGroup.childScaleHeight = horizontalLayoutGroup.childScaleWidth = true;*/
             requestRowPrefab.transform.Find("LatencyFG").GetComponent<Image>().maskable = true;
             requestRowPrefab.transform.Find("LatencyBG").GetComponent<Image>().maskable = true;
-
+            
             GameObject.DontDestroyOnLoad(requestRowPrefab);
             requestRowPrefab.SetActive(false);
         }

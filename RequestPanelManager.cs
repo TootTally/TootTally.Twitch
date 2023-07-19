@@ -68,9 +68,6 @@ namespace TootTally.Twitch
             if (Input.GetKeyDown(KeyCode.F8))
                 TogglePanel();
 
-            if (Input.GetKeyUp(KeyCode.F7))
-                AddRow("Test", "TestCharter", "Requested by grist");
-
             if (_isPanelActive && Input.mouseScrollDelta.y != 0 && _requestRowList.Count >= 6)
                 _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(_containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 35f, MIN_POS_Y, ((_requestRowList.Count - 6f) * 120f) + 120f));
         }

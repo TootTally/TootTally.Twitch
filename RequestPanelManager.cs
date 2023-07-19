@@ -69,7 +69,7 @@ namespace TootTally.Twitch
                 TogglePanel();
 
             if (Input.GetKeyUp(KeyCode.F7))
-                _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, "Test", "TestCharter", "Requested by grist", DateTime.Now));
+                AddRow("Test", "TestCharter", "Requested by grist");
 
             if (_isPanelActive && Input.mouseScrollDelta.y != 0 && _requestRowList.Count >= 6)
                 _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(_containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 35f, MIN_POS_Y, ((_requestRowList.Count - 6f) * 120f) + 120f));
@@ -99,6 +99,10 @@ namespace TootTally.Twitch
             }
         }
 
+        public static void AddRow(string songName, string charterName, string requestedByName)
+        {
+            _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, songName, charterName, requestedByName, DateTime.Now));
+        }
 
         public static void Dispose()
         {

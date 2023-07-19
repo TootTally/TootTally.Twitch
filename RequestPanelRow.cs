@@ -30,8 +30,14 @@ namespace TootTally.Twitch
             GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "RequestedByName", requestedByName, GameTheme.themeColors.leaderboard.text);
             GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "Time", requestTime.ToString(), GameTheme.themeColors.leaderboard.text);
             GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(120,60), "Play", "PlayButton");
-            GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(120,60), "Skip", "SkipButton");
+            GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(120,60), "Skip", "SkipButton", RemoveFromPanel);
             _requestRow.SetActive(true);
+        }
+
+        public void RemoveFromPanel()
+        {
+            RequestPanelManager.Remove(this);
+            GameObject.DestroyImmediate(_requestRow);
         }
     }
 }

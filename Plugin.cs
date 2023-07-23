@@ -159,7 +159,10 @@ namespace TootTally.Twitch
                     {
                         LogInfo($"Obtained request by {request.requester} for song {songdata.author} - {songdata.name}");
                         DisplayNotif($"Requested song by {request.requester}: {songdata.author} - {songdata.name}");
-                        RequestPanelManager.AddRow(songdata, request);
+                        var processed_request = new Request();
+                        processed_request.requester = request.requester;
+                        processed_request.songData = songdata;
+                        RequestPanelManager.AddRow(processed_request);
                         Bot.client.SendMessage(Plugin.Instance.Bot.CHANNEL, $"Song ID {request.song_id} successfully requested.");
                     }));
                 }

@@ -157,6 +157,7 @@ namespace TootTally.Twitch
                     StartCoroutine(TootTallyAPIService.GetSongDataFromDB(request.song_id, (songdata) =>
                     {
                         LogInfo($"Obtained request by {request.requester} for song {songdata.author} - {songdata.name}");
+                        if (RequestPanelManager.CheckDuplicate(request)) return; // Duplicate: Do not process.
                         DisplayNotif($"Requested song by {request.requester}: {songdata.author} - {songdata.name}");
                         var processed_request = new Request();
                         processed_request.requester = request.requester;

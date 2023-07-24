@@ -121,10 +121,10 @@ namespace TootTally.Twitch
         {
             foreach (var request in _requestRowList)
             {
-                if (request.trackref == trackref)
+                if (request.request.songData.track_ref == trackref)
                 {
                     request.RemoveFromPanel();
-                    return;
+                    Plugin.Instance.DisplayNotif($"Fulfilled request from {request.request.requester}");
                 }
             }
         }
@@ -172,6 +172,15 @@ namespace TootTally.Twitch
                     return;
                 }
             }
+        }
+
+        public static bool CheckDuplicate(Plugin.UnprocessedRequest request)
+        {
+            foreach (var reqRow in _requestRowList)
+            {
+                if (reqRow.request.song_id == request.song_id) return true;
+            }
+            return false;
         }
     }
 }

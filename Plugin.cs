@@ -154,18 +154,20 @@ namespace TootTally.Twitch
                 if (RequestStack.TryPop(out request))
                 {
                     LogInfo($"Attempting to get song data for ID {request.song_id}");
-                    StartCoroutine(TootTallyAPIService.GetSongDataFromDB(request.song_id, (songdata) =>
+                    if (!RequestPanelManager.CheckDuplicate(request))
                     {
-                        LogInfo($"Obtained request by {request.requester} for song {songdata.author} - {songdata.name}");
-                        if (RequestPanelManager.CheckDuplicate(request)) return; // Duplicate: Do not process.
-                        DisplayNotif($"Requested song by {request.requester}: {songdata.author} - {songdata.name}");
-                        var processed_request = new Request();
-                        processed_request.requester = request.requester;
-                        processed_request.songData = songdata;
-                        processed_request.song_id = request.song_id;
-                        RequestPanelManager.AddRow(processed_request);
-                        Bot.client.SendMessage(Plugin.Instance.Bot.CHANNEL, $"Song ID {request.song_id} successfully requested.");
-                    }));
+                        StartCoroutine(TootTallyAPIService.GetSongDataFromDB(request.song_id, (songdata) =>
+                        {
+                            LogInfo($"Obtained request by {request.requester} for song {songdata.author} - {songdata.name}");
+                            DisplayNotif($"Requested song by {request.requester}: {songdata.author} - {songdata.name}");
+                            var processed_request = new Request();
+                            processed_request.requester = request.requester;
+                            processed_request.songData = songdata;
+                            processed_request.song_id = request.song_id;
+                            RequestPanelManager.AddRow(processed_request);
+                            Bot.client.SendMessage(Plugin.Instance.Bot.CHANNEL, $"Song ID {request.song_id} successfully requested.");
+                        }));
+                    }
                 }
                 yield return null;
             }

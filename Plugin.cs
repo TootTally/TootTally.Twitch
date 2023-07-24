@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using TootTally.Utils;
+using TootTally.Utils.APIServices;
 using TootTally.Utils.TootTallySettings;
 using TootTally.Graphics;
 using UnityEngine;
@@ -27,7 +28,6 @@ namespace TootTally.Twitch
         public string Name { get => PluginInfo.PLUGIN_NAME; set => Name = value; }
         public ManualLogSource GetLogger { get => Logger; }
         public string CurrentSong { get; internal set; }
-        public List<Request> Requests { get; set; } // real requests queue
         public List<string> RequesterBlacklist { get; set; }
         public List<int> SongIDBlacklist { get; set; }
         private TwitchBot Bot = null;
@@ -115,7 +115,6 @@ namespace TootTally.Twitch
             RequestStack = new Stack<UnprocessedRequest>();
             RequesterBlacklist = new List<string>();
             SongIDBlacklist = new List<int>();
-            Requests = new List<Request>();
             StartCoroutine(NotifCoroutine());
             StartCoroutine(RequestCoroutine());
 
@@ -212,8 +211,6 @@ namespace TootTally.Twitch
             RequesterBlacklist = null;
             SongIDBlacklist?.Clear();
             SongIDBlacklist = null;
-            Requests?.Clear();
-            Requests = null;
             StopAllCoroutines();
             Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
             LogInfo($"Module unloaded!");
@@ -229,6 +226,13 @@ namespace TootTally.Twitch
                 RequestPanelManager.Initialize();
             }
 
+            [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
+            [HarmonyPostfix]
+            public static void DeInitialize()
+            {
+                RequestPanelManager.songSelectInstance = null;
+            }
+
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.tryToSaveSettings))]
             [HarmonyPostfix]
             public static void InitializeRequestPanelOnSaveConfig() => InitializeRequestPanel();
@@ -237,6 +241,7 @@ namespace TootTally.Twitch
             [HarmonyPostfix]
             public static void SetCurrentSong()
             {
+                RequestPanelManager.songSelectInstance = null;
                 Instance.CurrentSong = $"{GlobalVariables.chosen_track_data.artist} - {GlobalVariables.chosen_track_data.trackname_long}";
             }
 
@@ -245,13 +250,24 @@ namespace TootTally.Twitch
             public static void ResetCurrentSong()
             {
                 Instance.CurrentSong = "No song currently being played.";
+                RequestPanelManager.Remove(GlobalVariables.chosen_track_data.trackref);
             }
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
-            public static void StartBot()
+            public static void StartBot(LevelSelectController __instance, int ___songindex)
             {
+                RequestPanelManager.songSelectInstance = __instance;
+                RequestPanelManager.songIndex = ___songindex;
                 Instance.StartCoroutine(Instance.StartBotCoroutine());
+            }
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
+            [HarmonyPostfix]
+            public static void UpdateInstance(LevelSelectController __instance, int ___songindex)
+            {
+                RequestPanelManager.songSelectInstance = __instance;
+                RequestPanelManager.songIndex = ___songindex;
             }
         }
 

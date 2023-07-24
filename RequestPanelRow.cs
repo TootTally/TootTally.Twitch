@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TootTally.Graphics;
-using TootTally.Utils;
+using TootTally.Utils.APIServices;
 using Microsoft.FSharp.Core;
 using BaboonAPI.Hooks.Tracks;
 using UnityEngine;
@@ -19,6 +19,7 @@ namespace TootTally.Twitch
         private Plugin.Request _request;
         private SerializableClass.SongDataFromDB _chart;
         private DateTime _requestTime;
+        public string trackref;
 
         public RequestPanelRow(Transform canvasTransform, Plugin.Request request, DateTime requestTime) 
         {
@@ -28,6 +29,7 @@ namespace TootTally.Twitch
             _requestRow = GameObject.Instantiate(RequestPanelManager.requestRowPrefab, canvasTransform);
             _requestRow.name = $"Request{_chart.name}";
             _requestRowContainer = _requestRow.transform.Find("LatencyFG/MainPage").gameObject;
+            trackref = _chart.track_ref;
             GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "SongName", _chart.name, GameTheme.themeColors.leaderboard.text);
             GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "Charter", _chart.charter, GameTheme.themeColors.leaderboard.text);
             GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "RequestedByName", request.requester, GameTheme.themeColors.leaderboard.text);
@@ -50,6 +52,7 @@ namespace TootTally.Twitch
                 // track is Some, found in current track list
                 // TODO: Figure out how to either play the song from here or
                 //       set the track in the song select to this specific track
+                RequestPanelManager.SetTrackToTrackref(_chart.track_ref);
             }
         }
 

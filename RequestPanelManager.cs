@@ -14,6 +14,8 @@ namespace TootTally.Twitch
     {
         private const float MIN_POS_Y = -120;
         public static GameObject requestRowPrefab;
+        public static LevelSelectController songSelectInstance;
+        public static int songIndex;
         private static List<RequestPanelRow> _requestRowList;
         private static RectTransform _containerRect;
         private static CustomAnimation _panelAnimationFG, _panelAnimationBG;
@@ -115,6 +117,18 @@ namespace TootTally.Twitch
             _requestRowList.Remove(row);
         }
 
+        public static void Remove(string trackref)
+        {
+            foreach (var request in _requestRowList)
+            {
+                if (request.trackref == trackref)
+                {
+                    request.RemoveFromPanel();
+                    return;
+                }
+            }
+        }
+
         public static void SetRequestRowPrefab()
         {
 
@@ -146,5 +160,18 @@ namespace TootTally.Twitch
             requestRowPrefab.SetActive(false);
         }
 
+        public static void SetTrackToTrackref(string trackref)
+        {
+            if (songSelectInstance == null) return;
+            for (int i = 0; i < songSelectInstance.alltrackslist.Count; i++)
+            {
+                if (songSelectInstance.alltrackslist[i].trackref == trackref)
+                {
+                    songSelectInstance.advanceSongs(i - songIndex, true);
+                    RequestPanelManager.TogglePanel();
+                    return;
+                }
+            }
+        }
     }
 }

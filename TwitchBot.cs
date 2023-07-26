@@ -78,7 +78,7 @@ namespace TootTally.Twitch
 
         private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs args)
         {
-            Plugin.Instance.DisplayNotif("Login credentials incorrect. Please re-authorize and re-check your Twitch username.", true);
+            Plugin.Instance.DisplayNotif("Login credentials incorrect. Please re-authorize or refresh your access token, and re-check your Twitch username.", true);
             client.Disconnect();
         }
 

@@ -92,7 +92,7 @@ namespace TootTally.Twitch
                     StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) =>
                     {
                         option.TwitchAccessToken.Value = token_info.access_token;
-                        DisplayNotif("Access token successfully obtained");
+                        DisplayNotif("Access token successfully refreshed");
                     }));
                 });
                 _settingPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 24);
@@ -175,7 +175,14 @@ namespace TootTally.Twitch
 
         public IEnumerator StartBotCoroutine()
         {
-            if (Bot == null) Bot = new TwitchBot();
+            if (Bot == null) {
+                StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) =>
+                {
+                    option.TwitchAccessToken.Value = token_info.access_token;
+                    DisplayNotif("Access token successfully refreshed");
+                    Bot = new TwitchBot();
+                }));
+            }
             yield return null;
         }
 

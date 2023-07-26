@@ -167,7 +167,11 @@ namespace TootTally.Twitch
             {
                 if (songSelectInstance.alltrackslist[i].trackref == trackref)
                 {
-                    songSelectInstance.advanceSongs(i - songIndex, true);
+                    if (i - songIndex != 0)
+                    {
+                        // Only advance songs if we're not on the same song already
+                        songSelectInstance.advanceSongs(i - songIndex, true);
+                    }
                     RequestPanelManager.TogglePanel();
                     return;
                 }

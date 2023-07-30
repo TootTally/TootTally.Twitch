@@ -26,7 +26,7 @@
 
 	<ItemGroup>
 		<Reference Include="TootTally">
-			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTally\plugins\TootTally.dll</HintPath>
+			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTally\TootTally.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

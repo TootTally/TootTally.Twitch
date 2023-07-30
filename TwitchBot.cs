@@ -98,21 +98,21 @@ namespace TootTally.Twitch
                             }
                             else {
                                 Plugin.Instance.LogInfo("Could not parse request input, ignoring.");
-                                client.SendMessage(CHANNEL, "Invalid song ID. Please try again.");
+                                client.SendMessage(CHANNEL, "!Invalid song ID. Please try again.");
                             }
                         }
                         else {
-                            client.SendMessage(CHANNEL, $"Use !ttr to request a chart use its TootTally Song ID! To get a song ID, search for the song in https://toottally.com (Example: !ttr 3781)");
+                            client.SendMessage(CHANNEL, $"!Use !ttr to request a chart use its TootTally Song ID! To get a song ID, search for the song in https://toottally.com (Example: !ttr 3781)");
                         }
                     }
                     break;
                 case "profile": // Get profile
                     if (Plugin.Instance.option.EnableProfileCommand.Value && TootTally.Plugin.userInfo.id > 0)
-                        client.SendMessage(CHANNEL, $"TootTally Profile: https://toottally.com/profile/{TootTally.Plugin.userInfo.id}");
+                        client.SendMessage(CHANNEL, $"!TootTally Profile: https://toottally.com/profile/{TootTally.Plugin.userInfo.id}");
                     break;
                 case "song": // Get current song
                     if (Plugin.Instance.option.EnableCurrentSongCommand.Value) {
-                        client.SendMessage(CHANNEL, $"Current Song: {Plugin.Instance.CurrentSong}");
+                        client.SendMessage(CHANNEL, $"!Current Song: {Plugin.Instance.CurrentSong}");
                     }
                     break;
                 default:
@@ -132,7 +132,7 @@ namespace TootTally.Twitch
   
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
-            client.SendMessage(e.Channel, "TootTally Twitch Integration ready!");
+            client.SendMessage(e.Channel, "!TootTally Twitch Integration ready!");
             Plugin.Instance.DisplayNotif("Twitch Integration successful!");
             Plugin.Instance.LogInfo("Twitch integration successfully attached to chat!");
             CHANNEL = e.Channel;

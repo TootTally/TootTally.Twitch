@@ -165,7 +165,7 @@ namespace TootTally.Twitch
                             processed_request.songData = songdata;
                             processed_request.song_id = request.song_id;
                             RequestPanelManager.AddRow(processed_request);
-                            Bot.client.SendMessage(Plugin.Instance.Bot.CHANNEL, $"Song ID {request.song_id} successfully requested.");
+                            Bot.client.SendMessage(Plugin.Instance.Bot.CHANNEL, $"!Song ID {request.song_id} successfully requested.");
                         }));
                     }
                 }

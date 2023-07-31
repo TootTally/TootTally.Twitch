@@ -132,7 +132,7 @@ namespace TootTally.Twitch
         public static void SetRequestRowPrefab()
         {
 
-            var tempRow = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1200, 100), 5f, $"TwitchRequestRowTemp").transform.Find("FSLatencyPanel").gameObject;
+            var tempRow = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1200, 84), 5f, $"TwitchRequestRowTemp").transform.Find("FSLatencyPanel").gameObject;
             requestRowPrefab = GameObject.Instantiate(tempRow);
             GameObject.DestroyImmediate(tempRow.gameObject);
 
@@ -149,10 +149,9 @@ namespace TootTally.Twitch
             var horizontalLayoutGroup = container.AddComponent<HorizontalLayoutGroup>();
             horizontalLayoutGroup.padding = new RectOffset(20, 20, 20, 20);
             horizontalLayoutGroup.spacing = 20f;
-            horizontalLayoutGroup.childAlignment = TextAnchor.UpperLeft;
-            /*horizontalLayoutGroup.childControlHeight = horizontalLayoutGroup.childControlWidth = false;
-            horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = true;
-            horizontalLayoutGroup.childScaleHeight = horizontalLayoutGroup.childScaleWidth = true;*/
+            horizontalLayoutGroup.childAlignment = TextAnchor.MiddleLeft;
+            horizontalLayoutGroup.childControlHeight = horizontalLayoutGroup.childControlWidth = false;
+            horizontalLayoutGroup.childForceExpandHeight = horizontalLayoutGroup.childForceExpandWidth = false;
             requestRowPrefab.transform.Find("LatencyFG").GetComponent<Image>().maskable = true;
             requestRowPrefab.transform.Find("LatencyBG").GetComponent<Image>().maskable = true;
 

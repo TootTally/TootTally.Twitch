@@ -73,7 +73,7 @@ namespace TootTally.Twitch
 
         private void Client_OnError(object sender, OnErrorEventArgs args)
         {
-            Plugin.Instance.LogError($"{args.Exception.ToString()}\n{args.Exception.StackTrace}");
+            Plugin.Instance.LogError($"{args.Exception}\n{args.Exception.StackTrace}");
         }
 
         private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs args)
@@ -122,7 +122,7 @@ namespace TootTally.Twitch
 
         private void Client_OnLog(object sender, OnLogArgs e)
         {
-            Plugin.Instance.LogInfo($"{e.DateTime.ToString()}: {e.BotUsername} - {e.Data}");
+            Plugin.Instance.LogInfo($"{e.DateTime}: {e.BotUsername} - {e.Data}");
         }
   
         private void Client_OnConnected(object sender, OnConnectedArgs e)

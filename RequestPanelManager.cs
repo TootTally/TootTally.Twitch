@@ -29,7 +29,7 @@ namespace TootTally.Twitch
         {
             if (_isInitialized) return;
 
-            _overlayCanvas = new GameObject("OverlayCanvas");
+            _overlayCanvas = new GameObject("TwitchOverlayCanvas");
             Canvas canvas = _overlayCanvas.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             CanvasScaler scaler = _overlayCanvas.AddComponent<CanvasScaler>();
@@ -124,7 +124,7 @@ namespace TootTally.Twitch
                 if (request.request.songData.track_ref == trackref)
                 {
                     request.RemoveFromPanel();
-                    Plugin.Instance.DisplayNotif($"Fulfilled request from {request.request.requester}");
+                    PopUpNotifManager.DisplayNotif($"Fulfilled request from {request.request.requester}", GameTheme.themeColors.notification.defaultText);
                 }
             }
         }

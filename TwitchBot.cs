@@ -14,7 +14,7 @@ using TwitchLib.Communication.Events;
 
 namespace TootTally.Twitch
 {
-    class TwitchBot
+    public class TwitchBot
     {
         internal TwitchClient client;
         public string ACCESS_TOKEN { private get; set; }
@@ -58,13 +58,13 @@ namespace TootTally.Twitch
         private bool Initialize()
         {
             if (Plugin.Instance.option.TwitchAccessToken.Value == null || Plugin.Instance.option.TwitchAccessToken.Value == "") {
-                Plugin.Instance.DisplayNotif("Twitch Access Token is empty. Please fill it in.", true);
+                Plugin.DisplayNotif("Twitch Access Token is empty. Please fill it in.", true);
                 return false;
             }
             // TODO: Check if ACCESS_TOKEN actually works
             ACCESS_TOKEN = Plugin.Instance.option.TwitchAccessToken.Value;
             if (Plugin.Instance.option.TwitchUsername.Value == null || Plugin.Instance.option.TwitchUsername.Value == "") {
-                Plugin.Instance.DisplayNotif("Twitch Username is empty. Please fill it in.", true);
+                Plugin.DisplayNotif("Twitch Username is empty. Please fill it in.", true);
                 return false;
             }
             CHANNEL = Plugin.Instance.option.TwitchUsername.Value.ToLower();
@@ -78,7 +78,7 @@ namespace TootTally.Twitch
 
         private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs args)
         {
-            Plugin.Instance.DisplayNotif("Login credentials incorrect. Please re-authorize or refresh your access token, and re-check your Twitch username.", true);
+            Plugin.DisplayNotif("Login credentials incorrect. Please re-authorize or refresh your access token, and re-check your Twitch username.", true);
             client.Disconnect();
         }
 
@@ -94,7 +94,7 @@ namespace TootTally.Twitch
                             int song_id;
                             if (int.TryParse(cmd_args, out song_id)) {
                                 Plugin.Instance.LogInfo($"Successfully parsed request for {song_id}, submitting to stack.");
-                                Plugin.Instance.RequestSong(song_id, args.Command.ChatMessage.Username);
+                                Plugin.Instance.requestController.RequestSong(song_id, args.Command.ChatMessage.Username);
                             }
                             else {
                                 Plugin.Instance.LogInfo("Could not parse request input, ignoring.");
@@ -112,7 +112,7 @@ namespace TootTally.Twitch
                     break;
                 case "song": // Get current song
                     if (Plugin.Instance.option.EnableCurrentSongCommand.Value) {
-                        client.SendMessage(CHANNEL, $"!Current Song: {Plugin.Instance.CurrentSong}");
+                        client.SendMessage(CHANNEL, $"!Current Song: {Plugin.Instance.requestController.CurrentSong}");
                     }
                     break;
                 default:
@@ -133,7 +133,7 @@ namespace TootTally.Twitch
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
             client.SendMessage(e.Channel, "!TootTally Twitch Integration ready!");
-            Plugin.Instance.DisplayNotif("Twitch Integration successful!");
+            Plugin.DisplayNotif("Twitch Integration successful!");
             Plugin.Instance.LogInfo("Twitch integration successfully attached to chat!");
             CHANNEL = e.Channel;
         }
@@ -141,7 +141,7 @@ namespace TootTally.Twitch
         private void Client_OnDisconnected(object sender, OnDisconnectedArgs e)
         {
             Plugin.Instance.LogInfo("TwitchBot successfully disconnected from Twitch!");
-            Plugin.Instance.DisplayNotif("Twitch bot disconnected!");
+            Plugin.DisplayNotif("Twitch bot disconnected!");
         }
     }
 }

@@ -45,7 +45,7 @@ namespace TootTally.Twitch
                 GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Check64.png"), "PlayButton", PlayChart);
 
             GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Close64.png"), "SkipButton", RemoveFromPanel);
-            GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Block64.png"), "BlockButton", BlockChart);
+            //GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Block64.png"), "BlockButton", BlockChart);
             _requestRow.SetActive(true);
         }
 

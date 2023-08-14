@@ -12,6 +12,7 @@ using TootTally.Utils.TootTallySettings;
 using TootTally.Graphics;
 using UnityEngine;
 using UnityEngine.Networking.Match;
+using System;
 
 namespace TootTally.Twitch
 {
@@ -179,6 +180,7 @@ namespace TootTally.Twitch
             public static void SetCurrentSong()
             {
                 RequestPanelManager.songSelectInstance = null;
+                RequestPanelManager.isPlaying = true;
                 Plugin.Instance.requestController.SetCurrentSong($"{GlobalVariables.chosen_track_data.artist} - {GlobalVariables.chosen_track_data.trackname_long}");
             }
 
@@ -196,6 +198,7 @@ namespace TootTally.Twitch
             {
                 RequestPanelManager.songSelectInstance = __instance;
                 RequestPanelManager.songIndex = ___songindex;
+                RequestPanelManager.isPlaying = false;
                 Instance.StartCoroutine(Instance.StartBotCoroutine());
             }
 
@@ -220,11 +223,13 @@ namespace TootTally.Twitch
             public ConfigEntry<string> TwitchAccessToken { get; set; }
         }
 
+        [Serializable]
         public class Request
         {
             public string requester;
             public SerializableClass.SongDataFromDB songData;
             public int song_id;
+            public string date;
         }
 
         public class UnprocessedRequest

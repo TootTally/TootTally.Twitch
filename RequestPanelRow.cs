@@ -21,20 +21,18 @@ namespace TootTally.Twitch
 
         public Plugin.Request request { get; private set; }
         private SerializableClass.SongDataFromDB _chart;
-        private DateTime _requestTime;
 
-        public RequestPanelRow(Transform canvasTransform, Plugin.Request request, DateTime requestTime)
+        public RequestPanelRow(Transform canvasTransform, Plugin.Request request)
         {
             _chart = request.songData;
             this.request = request;
-            _requestTime = requestTime;
             _requestRow = GameObject.Instantiate(RequestPanelManager.requestRowPrefab, canvasTransform);
             _requestRow.name = $"Request{_chart.name}";
             _requestRowContainer = _requestRow.transform.Find("LatencyFG/MainPage").gameObject;
             var t1 = GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "SongName", _chart.name, GameTheme.themeColors.leaderboard.text);
             var t2 = GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "Charter", (_chart.charter ?? "Unknown"), GameTheme.themeColors.leaderboard.text);
             var t3 = GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "RequestedByName", request.requester, GameTheme.themeColors.leaderboard.text);
-            var t4 = GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "Time", requestTime.ToString(), GameTheme.themeColors.leaderboard.text);
+            var t4 = GameObjectFactory.CreateSingleText(_requestRowContainer.transform, "Time", request.date, GameTheme.themeColors.leaderboard.text);
             //fuck that shit :skull:
             t1.GetComponent<RectTransform>().sizeDelta = new Vector2(250, 64);
             t2.GetComponent<RectTransform>().sizeDelta = t3.GetComponent<RectTransform>().sizeDelta = new Vector2(200, 64);

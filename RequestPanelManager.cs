@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Linq;
+using static TootTally.Twitch.Plugin;
 
 namespace TootTally.Twitch
 {
@@ -16,7 +18,10 @@ namespace TootTally.Twitch
         public static GameObject requestRowPrefab;
         public static LevelSelectController songSelectInstance;
         public static int songIndex;
+        public static bool isPlaying;
         private static List<RequestPanelRow> _requestRowList;
+        private static List<Request> _requestList;
+
         private static RectTransform _containerRect;
         private static CustomAnimation _panelAnimationFG, _panelAnimationBG;
 
@@ -36,6 +41,7 @@ namespace TootTally.Twitch
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             _requestRowList = new List<RequestPanelRow>();
+            _requestList = new List<Request>();
 
             GameObject.DontDestroyOnLoad(_overlayCanvas);
 
@@ -59,8 +65,12 @@ namespace TootTally.Twitch
             _overlayPanel.SetActive(false);
             SetRequestRowPrefab();
 
+            _requestList = FileManager.GetRequestsFromFile();
+            _requestList.ForEach(AddRowFromFile);
+
             _isPanelActive = false;
             _isInitialized = true;
+            isPlaying = false;
         }
 
         public static void Update()
@@ -79,12 +89,10 @@ namespace TootTally.Twitch
             _isPanelActive = !_isPanelActive;
             if (_overlayPanel != null)
             {
-                if (_panelAnimationBG != null)
-                    _panelAnimationBG.Dispose();
-                if (_panelAnimationFG != null)
-                    _panelAnimationFG.Dispose();
+                _panelAnimationBG?.Dispose();
+                _panelAnimationFG?.Dispose();
                 var targetVector = _isPanelActive ? Vector2.one : Vector2.zero;
-                var animationTime = _isPanelActive ? 1f: 0.45f;
+                var animationTime = _isPanelActive ? 1f : 0.45f;
                 var secondDegreeAnimationFG = _isPanelActive ? new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f) : new EasingHelper.SecondOrderDynamics(3.2f, 1f, 0.25f);
                 var secondDegreeAnimationBG = _isPanelActive ? new EasingHelper.SecondOrderDynamics(1.75f, 1f, 0f) : new EasingHelper.SecondOrderDynamics(3.2f, 1f, 0.25f);
                 _panelAnimationFG = AnimationManager.AddNewScaleAnimation(_overlayPanel.transform.Find("FSLatencyPanel/LatencyFG").gameObject, targetVector, animationTime, secondDegreeAnimationFG);
@@ -100,8 +108,13 @@ namespace TootTally.Twitch
 
         public static void AddRow(Plugin.Request request)
         {
-            _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, request, DateTime.Now));
+            _requestList.Add(request);
+            UpdateSaveRequestFile();
+            _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, request));
         }
+
+        public static void AddRowFromFile(Request request) =>
+            _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, request));
 
         public static void Dispose()
         {
@@ -114,6 +127,8 @@ namespace TootTally.Twitch
 
         public static void Remove(RequestPanelRow row)
         {
+            _requestList.Remove(row.request);
+            UpdateSaveRequestFile();
             _requestRowList.Remove(row);
         }
 
@@ -177,13 +192,18 @@ namespace TootTally.Twitch
             }
         }
 
-        public static bool CheckDuplicate(Plugin.UnprocessedRequest request)
+        public static bool CheckDuplicate(UnprocessedRequest request)
         {
             foreach (var reqRow in _requestRowList)
             {
                 if (reqRow.request.song_id == request.song_id) return true;
             }
             return false;
+        }
+
+        public static void UpdateSaveRequestFile()
+        {
+            FileManager.SaveToFile(_requestList);
         }
     }
 }

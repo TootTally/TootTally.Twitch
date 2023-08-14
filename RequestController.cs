@@ -16,7 +16,6 @@ namespace TootTally.Twitch
         public string CurrentSong { get; internal set; }
         public List<string> RequesterBlacklist { get; set; }
         public List<int> SongIDBlacklist { get; set; }
-        private TwitchBot Bot = null;
         private Stack<Notif> NotifStack;
         private Stack<UnprocessedRequest> RequestStack; // Unfinished request stack, only song ids here
 
@@ -32,6 +31,8 @@ namespace TootTally.Twitch
 
         public void Update()
         {
+            if (RequestPanelManager.isPlaying) return;
+
             if (RequestStack.TryPop(out UnprocessedRequest request))
             {
                 Instance.LogInfo($"Attempting to get song data for ID {request.song_id}");
@@ -41,12 +42,15 @@ namespace TootTally.Twitch
                     {
                         Instance.LogInfo($"Obtained request by {request.requester} for song {songdata.author} - {songdata.name}");
                         DisplayNotif($"Requested song by {request.requester}: {songdata.author} - {songdata.name}");
-                        var processed_request = new Request();
-                        processed_request.requester = request.requester;
-                        processed_request.songData = songdata;
-                        processed_request.song_id = request.song_id;
+                        var processed_request = new Request
+                        {
+                            requester = request.requester,
+                            songData = songdata,
+                            song_id = request.song_id,
+                            date = DateTime.Now.ToString()
+                        };
                         RequestPanelManager.AddRow(processed_request);
-                        Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song ID {request.song_id} successfully requested.");
+                        Plugin.Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song ID {request.song_id} successfully requested.");
                     }));
                 }
             }

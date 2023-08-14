@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TootTally.Graphics;
+﻿using TootTally.Graphics;
 using TootTally.Utils.APIServices;
 using Microsoft.FSharp.Core;
 using BaboonAPI.Hooks.Tracks;
 using UnityEngine;
 using TootTally.Utils;
-using TwitchLib.Api.Helix.Models.Soundtrack;
-using System.Security.Cryptography;
 
 namespace TootTally.Twitch
 {
@@ -54,6 +47,7 @@ namespace TootTally.Twitch
             // track is Some, found in current track list
             // TODO: Figure out how to either play the song from here or
             //       set the track in the song select to this specific track
+            RequestPanelManager.currentSongID = request.song_id;
             RequestPanelManager.SetTrackToTrackref(_chart.track_ref);
         }
 

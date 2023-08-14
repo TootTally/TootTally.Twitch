@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TootTally.Graphics;
 using TootTally.Utils;
-using TootTally.Utils.TootTallySettings;
 using UnityEngine;
 using static TootTally.Twitch.Plugin;
 
@@ -13,7 +9,6 @@ namespace TootTally.Twitch
 {
     public class RequestController : MonoBehaviour
     {
-        public string CurrentSong { get; internal set; }
         public List<string> RequesterBlacklist { get; set; }
         public List<int> SongIDBlacklist { get; set; }
         private Stack<Notif> NotifStack;
@@ -21,8 +16,6 @@ namespace TootTally.Twitch
 
         public void Awake()
         {
-            CurrentSong = "No song currently being played.";
-
             NotifStack = new Stack<Notif>();
             RequestStack = new Stack<UnprocessedRequest>();
             RequesterBlacklist = new List<string>();
@@ -50,7 +43,6 @@ namespace TootTally.Twitch
                             date = DateTime.Now.ToString()
                         };
                         RequestPanelManager.AddRow(processed_request);
-                        Plugin.Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song ID {request.song_id} successfully requested.");
                     }));
                 }
             }
@@ -65,9 +57,11 @@ namespace TootTally.Twitch
         public void DisplayNotif(string message, bool isError = false)
         {
             Color color = isError ? GameTheme.themeColors.notification.errorText : GameTheme.themeColors.notification.defaultText;
-            Notif notif = new Notif();
-            notif.message = message;
-            notif.color = color;
+            Notif notif = new Notif
+            {
+                message = message,
+                color = color
+            };
             NotifStack.Push(notif);
         }
 
@@ -77,6 +71,7 @@ namespace TootTally.Twitch
             if (!RequesterBlacklist.Contains(requester) && !SongIDBlacklist.Contains(song_id))
             {
                 Instance.LogInfo($"Accepted request {song_id} by {requester}.");
+                Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song ID {song_id} successfully requested.");
                 request.song_id = song_id;
                 request.requester = requester;
                 RequestStack.Push(request);
@@ -95,6 +90,5 @@ namespace TootTally.Twitch
             SongIDBlacklist = null;
         }
 
-        public void SetCurrentSong(string song) => CurrentSong = song;
     }
 }

@@ -1,10 +1,8 @@
-using System;
 using TootTally.Utils;
 using TootTally.Utils.Helpers;
 using TootTally.Graphics;
 using TootTally.Graphics.Animation;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,9 +16,13 @@ namespace TootTally.Twitch
         public static GameObject requestRowPrefab;
         public static LevelSelectController songSelectInstance;
         public static int songIndex;
+        public static string songTrackref;
         public static bool isPlaying;
         private static List<RequestPanelRow> _requestRowList;
         private static List<Request> _requestList;
+        private static List<int> _songIDHistory;
+        public static int currentSongID;
+
 
         private static RectTransform _containerRect;
         private static CustomAnimation _panelAnimationFG, _panelAnimationBG;
@@ -42,6 +44,7 @@ namespace TootTally.Twitch
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             _requestRowList = new List<RequestPanelRow>();
             _requestList = new List<Request>();
+            _songIDHistory = new List<int>();
 
             GameObject.DontDestroyOnLoad(_overlayCanvas);
 
@@ -106,7 +109,7 @@ namespace TootTally.Twitch
             }
         }
 
-        public static void AddRow(Plugin.Request request)
+        public static void AddRow(Request request)
         {
             _requestList.Add(request);
             UpdateSaveRequestFile();
@@ -134,14 +137,12 @@ namespace TootTally.Twitch
 
         public static void Remove(string trackref)
         {
-            foreach (var request in _requestRowList)
-            {
-                if (request.request.songData.track_ref == trackref)
-                {
-                    request.RemoveFromPanel();
-                    PopUpNotifManager.DisplayNotif($"Fulfilled request from {request.request.requester}", GameTheme.themeColors.notification.defaultText);
-                }
-            }
+            var request = _requestRowList.Find(r => r.request.songData.track_ref == trackref);
+            if (request == null) return;
+
+            request.RemoveFromPanel();
+            RequestPanelManager.AddSongIDToHistory(request.request.song_id);
+            PopUpNotifManager.DisplayNotif($"Fulfilled request from {request.request.requester}", GameTheme.themeColors.notification.defaultText);
         }
 
         public static void SetRequestRowPrefab()
@@ -186,11 +187,17 @@ namespace TootTally.Twitch
                         // Only advance songs if we're not on the same song already
                         songSelectInstance.advanceSongs(i - songIndex, true);
                     }
-                    RequestPanelManager.TogglePanel();
+                    TogglePanel();
                     return;
                 }
             }
         }
+
+        public static void AddSongIDToHistory(int id) => _songIDHistory.Add(id);
+        public static string GetSongIDHistoryString() => _songIDHistory.Count > 0 ? string.Join(", ", _songIDHistory) : "No songs history recorded";
+
+        public static string GetSongQueueIDString() => _requestList.Count > 0 ? string.Join(", ", _requestList.Select(x => x.song_id)) : "No songs requested";
+        public static string GetLastSongPlayed() => _songIDHistory.Count > 0 ? $"https://toottally.com/song/{_songIDHistory.Last()}" : "No song played";
 
         public static bool CheckDuplicate(UnprocessedRequest request)
         {

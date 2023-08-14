@@ -11,8 +11,10 @@ using TootTally.Utils.APIServices;
 using TootTally.Utils.TootTallySettings;
 using TootTally.Graphics;
 using UnityEngine;
-using UnityEngine.Networking.Match;
 using System;
+using BaboonAPI.Hooks.Tracks;
+using TootTally.Utils.Helpers;
+using TrombLoader.CustomTracks;
 
 namespace TootTally.Twitch
 {
@@ -156,6 +158,8 @@ namespace TootTally.Twitch
 
         public static class TwitchPatches
         {
+            private static string _selectedSongTrackRef;
+
             // Apply your Trombone Champ patches here
             [HarmonyPatch(typeof(GameObjectFactory), nameof(GameObjectFactory.OnHomeControllerInitialize))]
             [HarmonyPostfix]
@@ -181,14 +185,16 @@ namespace TootTally.Twitch
             {
                 RequestPanelManager.songSelectInstance = null;
                 RequestPanelManager.isPlaying = true;
-                Plugin.Instance.requestController.SetCurrentSong($"{GlobalVariables.chosen_track_data.artist} - {GlobalVariables.chosen_track_data.trackname_long}");
+                var track = TrackLookup.lookup(RequestPanelManager.songTrackref);
+                var songHash = SongDataHelper.GetSongHash(track);
+                Instance.StartCoroutine(TootTallyAPIService.GetHashInDB(songHash, track is CustomTrack, (id) => RequestPanelManager.currentSongID = id));
             }
 
             [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
             [HarmonyPostfix]
             public static void ResetCurrentSong()
             {
-                Plugin.Instance.requestController.SetCurrentSong("No song currently being played.");
+                RequestPanelManager.isPlaying = false;
                 RequestPanelManager.Remove(GlobalVariables.chosen_track_data.trackref);
             }
 
@@ -204,10 +210,11 @@ namespace TootTally.Twitch
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]
             [HarmonyPostfix]
-            public static void UpdateInstance(LevelSelectController __instance, int ___songindex)
+            public static void UpdateInstance(LevelSelectController __instance, List<SingleTrackData> ___alltrackslist, int ___songindex)
             {
                 RequestPanelManager.songSelectInstance = __instance;
                 RequestPanelManager.songIndex = ___songindex;
+                RequestPanelManager.songTrackref = ___alltrackslist[___songindex].trackref;
             }
         }
 

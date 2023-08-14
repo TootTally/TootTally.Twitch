@@ -1,12 +1,7 @@
 using System;
 using System.Collections.Generic;
-using TootTally.Utils;
-using TootTally.Graphics;
-using TwitchLib.Api.Auth;
 using TwitchLib.Client;
-using TwitchLib.Client.Enums;
 using TwitchLib.Client.Events;
-using TwitchLib.Client.Extensions;
 using TwitchLib.Client.Models;
 using TwitchLib.Communication.Clients;
 using TwitchLib.Communication.Models;
@@ -26,7 +21,7 @@ namespace TootTally.Twitch
             if (!Initialize()) return;
             Plugin.Instance.LogInfo($"Attempting connection with channel {CHANNEL}...");
             ConnectionCredentials credentials = new ConnectionCredentials(CHANNEL, ACCESS_TOKEN);
-	        var clientOptions = new ClientOptions
+            var clientOptions = new ClientOptions
             {
                 MessagesAllowedInPeriod = 750,
                 ThrottlingPeriod = TimeSpan.FromSeconds(30),
@@ -57,13 +52,15 @@ namespace TootTally.Twitch
 
         private bool Initialize()
         {
-            if (Plugin.Instance.option.TwitchAccessToken.Value == null || Plugin.Instance.option.TwitchAccessToken.Value == "") {
+            if (Plugin.Instance.option.TwitchAccessToken.Value == null || Plugin.Instance.option.TwitchAccessToken.Value == "")
+            {
                 Plugin.DisplayNotif("Twitch Access Token is empty. Please fill it in.", true);
                 return false;
             }
             // TODO: Check if ACCESS_TOKEN actually works
             ACCESS_TOKEN = Plugin.Instance.option.TwitchAccessToken.Value;
-            if (Plugin.Instance.option.TwitchUsername.Value == null || Plugin.Instance.option.TwitchUsername.Value == "") {
+            if (Plugin.Instance.option.TwitchUsername.Value == null || Plugin.Instance.option.TwitchUsername.Value == "")
+            {
                 Plugin.DisplayNotif("Twitch Username is empty. Please fill it in.", true);
                 return false;
             }
@@ -89,19 +86,24 @@ namespace TootTally.Twitch
             switch (command)
             {
                 case "ttr": // Request a song
-                    if (Plugin.Instance.option.EnableRequestsCommand.Value) {
-                        if (args.Command.ArgumentsAsList.Count == 1) {
+                    if (Plugin.Instance.option.EnableRequestsCommand.Value)
+                    {
+                        if (args.Command.ArgumentsAsList.Count == 1)
+                        {
                             int song_id;
-                            if (int.TryParse(cmd_args, out song_id)) {
+                            if (int.TryParse(cmd_args, out song_id))
+                            {
                                 Plugin.Instance.LogInfo($"Successfully parsed request for {song_id}, submitting to stack.");
                                 Plugin.Instance.requestController.RequestSong(song_id, args.Command.ChatMessage.Username);
                             }
-                            else {
+                            else
+                            {
                                 Plugin.Instance.LogInfo("Could not parse request input, ignoring.");
                                 client.SendMessage(CHANNEL, "!Invalid song ID. Please try again.");
                             }
                         }
-                        else {
+                        else
+                        {
                             client.SendMessage(CHANNEL, $"!Use !ttr to request a chart use its TootTally Song ID! To get a song ID, search for the song in https://toottally.com (Example: !ttr 3781)");
                         }
                     }
@@ -111,9 +113,26 @@ namespace TootTally.Twitch
                         client.SendMessage(CHANNEL, $"!TootTally Profile: https://toottally.com/profile/{TootTally.Plugin.userInfo.id}");
                     break;
                 case "song": // Get current song
-                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value) {
-                        client.SendMessage(CHANNEL, $"!Current Song: {Plugin.Instance.requestController.CurrentSong}");
+                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value && RequestPanelManager.currentSongID != 0)
+                    {
+                        client.SendMessage(CHANNEL, $"!Current Song: https://toottally.com/song/{RequestPanelManager.currentSongID}");
                     }
+                    break;
+                case "ttrhelp":
+                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value)
+                        client.SendMessage(CHANNEL, $"!Use !ttr to request a chart use its TootTally Song ID! To get a song ID, search for the song in https://toottally.com (Example: !ttr 3781)");
+                    break;
+                case "queue":
+                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value)
+                        client.SendMessage(CHANNEL, $"!Song Queue: {RequestPanelManager.GetSongQueueIDString()}");
+                    break;
+                case "last":
+                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value)
+                        client.SendMessage(CHANNEL, $"!Last song played: {RequestPanelManager.GetLastSongPlayed()}");
+                    break;
+                case "history":
+                    if (Plugin.Instance.option.EnableCurrentSongCommand.Value)
+                        client.SendMessage(CHANNEL, $"!Songs played: {RequestPanelManager.GetSongIDHistoryString()}");
                     break;
                 default:
                     break;
@@ -124,12 +143,12 @@ namespace TootTally.Twitch
         {
             Plugin.Instance.LogInfo($"{e.DateTime}: {e.BotUsername} - {e.Data}");
         }
-  
+
         private void Client_OnConnected(object sender, OnConnectedArgs e)
         {
             Plugin.Instance.LogInfo($"Connected to {e.AutoJoinChannel}");
         }
-  
+
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
             client.SendMessage(e.Channel, "!TootTally Twitch Integration ready!");

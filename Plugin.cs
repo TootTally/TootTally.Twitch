@@ -200,10 +200,11 @@ namespace TootTally.Twitch
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
             [HarmonyPostfix]
-            public static void StartBot(LevelSelectController __instance, int ___songindex)
+            public static void StartBot(LevelSelectController __instance, List<SingleTrackData> ___alltrackslist, int ___songindex)
             {
                 RequestPanelManager.songSelectInstance = __instance;
                 RequestPanelManager.songIndex = ___songindex;
+                RequestPanelManager.songTrackref = ___alltrackslist[___songindex].trackref;
                 RequestPanelManager.isPlaying = false;
                 Instance.StartCoroutine(Instance.StartBotCoroutine());
             }

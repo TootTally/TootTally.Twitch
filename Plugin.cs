@@ -15,6 +15,7 @@ using System;
 using BaboonAPI.Hooks.Tracks;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
+using Microsoft.FSharp.Collections;
 
 namespace TootTally.Twitch
 {
@@ -34,6 +35,7 @@ namespace TootTally.Twitch
         public TwitchBot Bot = null;
         private TootTallySettingPage _settingPage;
         public RequestController requestController;
+        private TracksLoaderListener tracksLoaderListener;
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);
 
@@ -107,11 +109,19 @@ namespace TootTally.Twitch
                 });
                 _settingPage.AddLabel("TwitchBotInstruction", "Twitch bot will also automatically start when you enter the song select menu.", 16);
             }
-
             requestController = gameObject.AddComponent<RequestController>();
 
             Harmony.CreateAndPatchAll(typeof(TwitchPatches), PluginInfo.PLUGIN_GUID);
             LogInfo($"Module loaded!");
+        }
+
+        public class TracksLoaderListener : TracksLoadedEvent.Listener
+        {
+            public void OnTracksLoaded(FSharpList<TromboneTrack> value)
+            {
+                RequestPanelManager.Dispose();
+                RequestPanelManager.Initialize();
+            }
         }
 
         private void SetTwitchUsername(string text)
@@ -150,6 +160,11 @@ namespace TootTally.Twitch
             Bot?.Disconnect();
             Bot = null;
             requestController?.Dispose();
+            if (tracksLoaderListener != null)
+            {
+                TracksLoadedEvent.EVENT.Unregister(tracksLoaderListener);
+                tracksLoaderListener = null;
+            }
             GameObject.DestroyImmediate(requestController);
             StopAllCoroutines();
             Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
@@ -172,6 +187,11 @@ namespace TootTally.Twitch
             [HarmonyPostfix]
             public static void DeInitialize()
             {
+                if (Plugin.Instance.tracksLoaderListener == null)
+                {
+                    Plugin.Instance.tracksLoaderListener = new TracksLoaderListener();
+                    TracksLoadedEvent.EVENT.Register(Plugin.Instance.tracksLoaderListener);
+                }
                 RequestPanelManager.songSelectInstance = null;
             }
 

@@ -260,6 +260,12 @@ namespace TootTally.Twitch
             public string date;
         }
 
+        [Serializable]
+        public class BlockedRequests
+        {
+            public int song_id;
+        }
+
         public class UnprocessedRequest
         {
             public string requester;

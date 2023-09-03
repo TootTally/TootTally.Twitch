@@ -4,6 +4,10 @@ using Microsoft.FSharp.Core;
 using BaboonAPI.Hooks.Tracks;
 using UnityEngine;
 using TootTally.Utils;
+using BepInEx;
+using System.IO;
+using TootTally.Utils.Helpers;
+using Microsoft.FSharp.Collections;
 
 namespace TootTally.Twitch
 {
@@ -11,7 +15,8 @@ namespace TootTally.Twitch
     {
         private GameObject _requestRowContainer;
         private GameObject _requestRow;
-
+        private GameObject _downloadButton;
+        private TracksLoaderListener _reloadListener;
         public Plugin.Request request { get; private set; }
         private SerializableClass.SongDataFromDB _chart;
 
@@ -33,29 +38,79 @@ namespace TootTally.Twitch
             t1.overflowMode = t2.overflowMode = t3.overflowMode = t4.overflowMode = TMPro.TextOverflowModes.Ellipsis;
 
             if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_chart.track_ref)))
-                GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart);
+                _downloadButton = GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
             else
                 GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Check64.png"), "PlayButton", PlayChart);
 
             GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Close64.png"), "SkipButton", RemoveFromPanel);
-            //GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Block64.png"), "BlockButton", BlockChart);
+            GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Block64.png"), "BlockButton", BlockChart);
             _requestRow.SetActive(true);
         }
 
         public void PlayChart()
         {
-            // track is Some, found in current track list
-            // TODO: Figure out how to either play the song from here or
-            //       set the track in the song select to this specific track
             RequestPanelManager.currentSongID = request.song_id;
             RequestPanelManager.SetTrackToTrackref(_chart.track_ref);
         }
 
         public void DownloadChart()
         {
-            // track is None, could not find track in the current track list
-            // Redirect them to the website and have them download the chart for now
-            Application.OpenURL($"https://toottally.com/song/{request.song_id}/");
+            if (_chart.download != null && _chart.download.ToLower().Contains("https://cdn.discordapp.com") && Path.GetExtension(_chart.download) == ".zip")
+            {
+                _downloadButton.SetActive(false);
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_chart.download, data =>
+                {
+                    if (data != null)
+                    {
+                        string downloadDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Downloads/");
+                        string fileName = $"{_chart.id}.zip";
+                        FileHelper.WriteBytesToFile(downloadDir, fileName, data);
+
+                        string source = Path.Combine(downloadDir, fileName);
+                        string destination = Path.Combine(Paths.BepInExRootPath, "CustomSongs/");
+                        FileHelper.ExtractZipToDirectory(source, destination);
+
+                        FileHelper.DeleteFile(downloadDir, fileName);
+
+                        _reloadListener = new TracksLoaderListener(this);
+                        TracksLoadedEvent.EVENT.Register(_reloadListener);
+
+                        PopUpNotifManager.DisplayNotif("Reloading Songs...");
+                        TootTally.Plugin.Instance.Invoke("ReloadTracks", .5f);
+                        
+                    }
+                    else
+                    {
+                        PopUpNotifManager.DisplayNotif("Download failed.");
+                        _downloadButton.SetActive(true);
+                    }
+                }));
+            }
+            else
+                PopUpNotifManager.DisplayNotif("Download incompatible or unavailable for that song.");
+
+        }
+
+        public class TracksLoaderListener : TracksLoadedEvent.Listener
+        {
+            private RequestPanelRow _row;
+            public TracksLoaderListener(RequestPanelRow row)
+            {
+                _row = row;
+            }
+
+            public void OnTracksLoaded(FSharpList<TromboneTrack> value)
+            {
+                _row.PlayChart();
+                _row.UnsubscribeLoaderEvent();
+            }
+        }
+
+        public void UnsubscribeLoaderEvent()
+        {
+            if (_reloadListener != null)
+                TracksLoadedEvent.EVENT.Unregister(_reloadListener);
+            _reloadListener = null;
         }
 
         public void RemoveFromPanel()
@@ -66,7 +121,8 @@ namespace TootTally.Twitch
 
         public void BlockChart()
         {
-
+            RequestPanelManager.AddToBlockList(_chart.id);
+            RemoveFromPanel();
         }
     }
 }

@@ -151,7 +151,7 @@ namespace TootTally.Twitch
 
         private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
-            client.SendMessage(e.Channel, "!TootTally Twitch Integration ready!");
+            client.SendMessage(e.Channel, "! TootTally Twitch Integration ready!");
             Plugin.DisplayNotif("Twitch Integration successful!");
             Plugin.Instance.LogInfo("Twitch integration successfully attached to chat!");
             CHANNEL = e.Channel;

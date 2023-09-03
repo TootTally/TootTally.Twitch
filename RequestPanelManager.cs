@@ -20,6 +20,7 @@ namespace TootTally.Twitch
         public static bool isPlaying;
         private static List<RequestPanelRow> _requestRowList;
         private static List<Request> _requestList;
+        private static List<BlockedRequests> _blockedList;
         private static List<int> _songIDHistory;
         public static int currentSongID;
 
@@ -44,6 +45,7 @@ namespace TootTally.Twitch
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             _requestRowList = new List<RequestPanelRow>();
             _requestList = new List<Request>();
+            _blockedList = new List<BlockedRequests>();
             _songIDHistory = new List<int>();
 
             GameObject.DontDestroyOnLoad(_overlayCanvas);
@@ -70,6 +72,7 @@ namespace TootTally.Twitch
 
             _requestList = FileManager.GetRequestsFromFile();
             _requestList.ForEach(AddRowFromFile);
+            _blockedList = FileManager.GetBlockedRequestsFromFile();
 
             _isPanelActive = false;
             _isInitialized = true;
@@ -114,6 +117,13 @@ namespace TootTally.Twitch
             _requestList.Add(request);
             UpdateSaveRequestFile();
             _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, request));
+        }
+
+        public static void AddToBlockList(int id)
+        {
+            _blockedList.Add(new BlockedRequests() { song_id = id });
+            PopUpNotifManager.DisplayNotif($"Song #{id} blocked.");
+            FileManager.SaveBlockedRequestsToFile(_blockedList);
         }
 
         public static void AddRowFromFile(Request request) =>
@@ -199,18 +209,13 @@ namespace TootTally.Twitch
         public static string GetSongQueueIDString() => _requestList.Count > 0 ? string.Join(", ", _requestList.Select(x => x.song_id)) : "No songs requested";
         public static string GetLastSongPlayed() => _songIDHistory.Count > 0 ? $"https://toottally.com/song/{_songIDHistory.Last()}" : "No song played";
 
-        public static bool CheckDuplicate(UnprocessedRequest request)
-        {
-            foreach (var reqRow in _requestRowList)
-            {
-                if (reqRow.request.song_id == request.song_id) return true;
-            }
-            return false;
-        }
+        public static bool IsDuplicate(int song_id) => _requestRowList.Any(x => x.request.song_id == song_id);
+
+        public static bool IsBlocked(int song_id) => _blockedList.Any(x => x.song_id == song_id);
 
         public static void UpdateSaveRequestFile()
         {
-            FileManager.SaveToFile(_requestList);
+            FileManager.SaveRequestsQueueToFile(_requestList);
         }
     }
 }

@@ -16,6 +16,7 @@ namespace TootTally.Twitch
         private GameObject _requestRowContainer;
         private GameObject _requestRow;
         private GameObject _downloadButton;
+        private ProgressBar _progressBar;
         private TracksLoaderListener _reloadListener;
         public Plugin.Request request { get; private set; }
         private SerializableClass.SongDataFromDB _chart;
@@ -38,7 +39,10 @@ namespace TootTally.Twitch
             t1.overflowMode = t2.overflowMode = t3.overflowMode = t4.overflowMode = TMPro.TextOverflowModes.Ellipsis;
 
             if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_chart.track_ref)))
+            {
                 _downloadButton = GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
+                _progressBar = GameObjectFactory.CreateProgressBar(_requestRow.transform.Find("LatencyFG"), Vector2.zero, new Vector2(900, 20), false, "ProgressBar");
+            }
             else
                 GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Check64.png"), "PlayButton", PlayChart);
 
@@ -58,7 +62,7 @@ namespace TootTally.Twitch
             if (_chart.download != null && _chart.download.ToLower().Contains("https://cdn.discordapp.com") && Path.GetExtension(_chart.download) == ".zip")
             {
                 _downloadButton.SetActive(false);
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_chart.download, data =>
+                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_chart.download, _progressBar, data =>
                 {
                     if (data != null)
                     {

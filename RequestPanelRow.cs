@@ -13,6 +13,7 @@ namespace TootTally.Twitch
 {
     public class RequestPanelRow
     {
+        private string _downloadLink;
         private GameObject _requestRowContainer;
         private GameObject _requestRow;
         private GameObject _downloadButton;
@@ -40,8 +41,15 @@ namespace TootTally.Twitch
 
             if (FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_chart.track_ref)))
             {
-                _downloadButton = GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
-                _progressBar = GameObjectFactory.CreateProgressBar(_requestRow.transform.Find("LatencyFG"), Vector2.zero, new Vector2(900, 20), false, "ProgressBar");
+                _downloadLink = FileHelper.GetDownloadLinkFromSongData(_chart);
+                if (_downloadLink != null)
+                {
+                    _downloadButton = GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Download64.png"), "DownloadButton", DownloadChart).gameObject;
+                    _progressBar = GameObjectFactory.CreateProgressBar(_requestRow.transform.Find("LatencyFG"), Vector2.zero, new Vector2(900, 20), false, "ProgressBar");
+                }
+                else
+                    _downloadButton = GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("global64.png"), "OpenLeaderboardButton", () => Application.OpenURL($"https://toottally.com/song/{request.songData.id}/")).gameObject;
+
             }
             else
                 GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Check64.png"), "PlayButton", PlayChart);
@@ -59,40 +67,34 @@ namespace TootTally.Twitch
 
         public void DownloadChart()
         {
-            if (_chart.download != null && _chart.download.ToLower().Contains("https://cdn.discordapp.com") && Path.GetExtension(_chart.download) == ".zip")
+            _downloadButton.SetActive(false);
+            Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_downloadLink, _progressBar, data =>
             {
-                _downloadButton.SetActive(false);
-                Plugin.Instance.StartCoroutine(TootTallyAPIService.DownloadZipFromServer(_chart.download, _progressBar, data =>
+                if (data != null)
                 {
-                    if (data != null)
-                    {
-                        string downloadDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Downloads/");
-                        string fileName = $"{_chart.id}.zip";
-                        FileHelper.WriteBytesToFile(downloadDir, fileName, data);
+                    string downloadDir = Path.Combine(Path.GetDirectoryName(Plugin.Instance.Info.Location), "Downloads/");
+                    string fileName = $"{_chart.id}.zip";
+                    FileHelper.WriteBytesToFile(downloadDir, fileName, data);
 
-                        string source = Path.Combine(downloadDir, fileName);
-                        string destination = Path.Combine(Paths.BepInExRootPath, "CustomSongs/");
-                        FileHelper.ExtractZipToDirectory(source, destination);
+                    string source = Path.Combine(downloadDir, fileName);
+                    string destination = Path.Combine(Paths.BepInExRootPath, "CustomSongs/");
+                    FileHelper.ExtractZipToDirectory(source, destination);
 
-                        FileHelper.DeleteFile(downloadDir, fileName);
+                    FileHelper.DeleteFile(downloadDir, fileName);
 
-                        _reloadListener = new TracksLoaderListener(this);
-                        TracksLoadedEvent.EVENT.Register(_reloadListener);
+                    _reloadListener = new TracksLoaderListener(this);
+                    TracksLoadedEvent.EVENT.Register(_reloadListener);
 
-                        PopUpNotifManager.DisplayNotif("Reloading Songs...");
-                        TootTally.Plugin.Instance.Invoke("ReloadTracks", .5f);
-                        
-                    }
-                    else
-                    {
-                        PopUpNotifManager.DisplayNotif("Download failed.");
-                        _downloadButton.SetActive(true);
-                    }
-                }));
-            }
-            else
-                PopUpNotifManager.DisplayNotif("Download incompatible or unavailable for that song.");
+                    PopUpNotifManager.DisplayNotif("Reloading Songs...");
+                    TootTally.Plugin.Instance.Invoke("ReloadTracks", .5f);
 
+                }
+                else
+                {
+                    PopUpNotifManager.DisplayNotif("Download not available.");
+                    _downloadButton.SetActive(true);
+                }
+            }));
         }
 
         public class TracksLoaderListener : TracksLoadedEvent.Listener
@@ -105,7 +107,9 @@ namespace TootTally.Twitch
 
             public void OnTracksLoaded(FSharpList<TromboneTrack> value)
             {
-                _row.PlayChart();
+                //Dunno why I have to call this twice 
+                //_row.PlayChart();
+                //_row.PlayChart();
                 _row.UnsubscribeLoaderEvent();
             }
         }

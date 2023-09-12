@@ -38,6 +38,7 @@ namespace TootTally.Twitch
         private TracksLoaderListener tracksLoaderListener;
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);
+        public void LogDebug(string msg ) => Logger.LogDebug(msg);
 
         private void Awake()
         {

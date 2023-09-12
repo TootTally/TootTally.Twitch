@@ -141,7 +141,7 @@ namespace TootTally.Twitch
 
         private void Client_OnLog(object sender, OnLogArgs e)
         {
-            Plugin.Instance.LogInfo($"{e.DateTime}: {e.BotUsername} - {e.Data}");
+            Plugin.Instance.LogDebug($"{e.DateTime}: {e.BotUsername} - {e.Data}");
         }
 
         private void Client_OnConnected(object sender, OnConnectedArgs e)

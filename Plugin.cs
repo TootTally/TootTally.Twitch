@@ -73,6 +73,7 @@ namespace TootTally.Twitch
                 EnableRequestsCommand = config.Bind(CONFIG_FIELD, "Enable requests command (!ttr)", true),
                 EnableCurrentSongCommand = config.Bind(CONFIG_FIELD, "Enable current song command (!song)", true),
                 EnableProfileCommand = config.Bind(CONFIG_FIELD, "Enable profile command (!profile)", true),
+                SubOnlyMode = config.Bind(CONFIG_FIELD, "Sub-only requests", false),
                 TwitchUsername = config.Bind(CONFIG_FIELD, "Twitch channel to attach to", ""),
                 TwitchAccessToken = config.Bind(CONFIG_FIELD, "Twitch Access Token", ""),
                 MaxRequestCount = config.Bind(CONFIG_FIELD, "Max Request Count", 50f),
@@ -81,9 +82,10 @@ namespace TootTally.Twitch
             _settingPage = TootTallySettingsManager.AddNewPage(CONFIG_FIELD, "Twitch Integration Settings", 40, new Color(.1f, .1f, .1f, .1f));
             if (_settingPage != null)
             {
-                _settingPage.AddToggle("EnableRequestsCommand", option.EnableRequestsCommand, (value) => { });
-                _settingPage.AddToggle("EnableCurrentSongsCommand", option.EnableCurrentSongCommand, (value) => { });
-                _settingPage.AddToggle("EnableProfileCommand", option.EnableProfileCommand, (value) => { });
+                _settingPage.AddToggle("Enable Requests Command", option.EnableRequestsCommand, (value) => { });
+                _settingPage.AddToggle("Enable Current Songs Command", option.EnableCurrentSongCommand, (value) => { });
+                _settingPage.AddToggle("Enable Profile Command", option.EnableProfileCommand, (value) => { });
+                _settingPage.AddToggle("Subs-only Mode", option.SubOnlyMode, (value) => { });
                 _settingPage.AddSlider("Max Request Count", 0, 200, option.MaxRequestCount, true);
                 _settingPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
                 _settingPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
@@ -250,6 +252,7 @@ namespace TootTally.Twitch
             public ConfigEntry<bool> EnableRequestsCommand { get; set; }
             public ConfigEntry<bool> EnableProfileCommand { get; set; }
             public ConfigEntry<bool> EnableCurrentSongCommand { get; set; }
+            public ConfigEntry<bool> SubOnlyMode { get; set; }
             public ConfigEntry<string> TwitchUsername { get; set; }
             public ConfigEntry<string> TwitchAccessToken { get; set; }
             public ConfigEntry<float> MaxRequestCount { get; set; }

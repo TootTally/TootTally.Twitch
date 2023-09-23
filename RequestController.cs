@@ -61,7 +61,7 @@ namespace TootTally.Twitch
             NotifStack.Push(notif);
         }
 
-        public void RequestSong(int song_id, string requester)
+        public void RequestSong(int song_id, string requester, bool isSubscriber = false)
         {
             
             if (!RequesterBlacklist.Contains(requester))
@@ -80,6 +80,9 @@ namespace TootTally.Twitch
                 {
                     Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Request cap reached.");
                     return;
+                }
+                else if (Instance.option.SubOnlyMode.Value && !isSubscriber) {
+                    return; // Silently ignore non-subscriber requests if in Sub Only mode
                 }
                 UnprocessedRequest request = new UnprocessedRequest();
                 request.song_id = song_id;

@@ -94,7 +94,7 @@ namespace TootTally.Twitch
                             if (int.TryParse(cmd_args, out song_id))
                             {
                                 Plugin.Instance.LogInfo($"Successfully parsed request for {song_id}, submitting to stack.");
-                                Plugin.Instance.requestController.RequestSong(song_id, args.Command.ChatMessage.Username);
+                                Plugin.Instance.requestController.RequestSong(song_id, args.Command.ChatMessage.Username, args.Command.ChatMessage.IsSubscriber);
                             }
                             else
                             {

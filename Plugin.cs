@@ -82,10 +82,10 @@ namespace TootTally.Twitch
             _settingPage = TootTallySettingsManager.AddNewPage(CONFIG_FIELD, "Twitch Integration Settings", 40, new Color(.1f, .1f, .1f, .1f));
             if (_settingPage != null)
             {
-                _settingPage.AddToggle("Enable Requests Command", option.EnableRequestsCommand, (value) => { });
-                _settingPage.AddToggle("Enable Current Songs Command", option.EnableCurrentSongCommand, (value) => { });
-                _settingPage.AddToggle("Enable Profile Command", option.EnableProfileCommand, (value) => { });
-                _settingPage.AddToggle("Subs-only Mode", option.SubOnlyMode, (value) => { });
+                _settingPage.AddToggle("Enable Requests Command", option.EnableRequestsCommand);
+                _settingPage.AddToggle("Enable Current Songs Command", option.EnableCurrentSongCommand);
+                _settingPage.AddToggle("Enable Profile Command", option.EnableProfileCommand);
+                _settingPage.AddToggle("Subs-only Mode", option.SubOnlyMode);
                 _settingPage.AddSlider("Max Request Count", 0, 200, option.MaxRequestCount, true);
                 _settingPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
                 _settingPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);

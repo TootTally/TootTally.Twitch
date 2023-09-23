@@ -23,6 +23,7 @@ namespace TootTally.Twitch
         private static List<BlockedRequests> _blockedList;
         private static List<int> _songIDHistory;
         public static int currentSongID;
+        public static int RequestCount { get { return _requestList.Count; } }
 
 
         private static RectTransform _containerRect;

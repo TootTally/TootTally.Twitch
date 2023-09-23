@@ -76,6 +76,11 @@ namespace TootTally.Twitch
                     Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song #{song_id} already requested.");
                     return;
                 }
+                else if (RequestPanelManager.RequestCount >= Instance.option.MaxRequestCount.Value)
+                {
+                    Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Request cap reached.");
+                    return;
+                }
                 UnprocessedRequest request = new UnprocessedRequest();
                 request.song_id = song_id;
                 request.requester = requester;

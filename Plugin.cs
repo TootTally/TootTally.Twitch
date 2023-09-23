@@ -74,7 +74,8 @@ namespace TootTally.Twitch
                 EnableCurrentSongCommand = config.Bind(CONFIG_FIELD, "Enable current song command (!song)", true),
                 EnableProfileCommand = config.Bind(CONFIG_FIELD, "Enable profile command (!profile)", true),
                 TwitchUsername = config.Bind(CONFIG_FIELD, "Twitch channel to attach to", ""),
-                TwitchAccessToken = config.Bind(CONFIG_FIELD, "Twitch Access Token", "")
+                TwitchAccessToken = config.Bind(CONFIG_FIELD, "Twitch Access Token", ""),
+                MaxRequestCount = config.Bind(CONFIG_FIELD, "Max Request Count", 50f),
             };
 
             _settingPage = TootTallySettingsManager.AddNewPage(CONFIG_FIELD, "Twitch Integration Settings", 40, new Color(.1f, .1f, .1f, .1f));
@@ -83,6 +84,7 @@ namespace TootTally.Twitch
                 _settingPage.AddToggle("EnableRequestsCommand", option.EnableRequestsCommand, (value) => { });
                 _settingPage.AddToggle("EnableCurrentSongsCommand", option.EnableCurrentSongCommand, (value) => { });
                 _settingPage.AddToggle("EnableProfileCommand", option.EnableProfileCommand, (value) => { });
+                _settingPage.AddSlider("Max Request Count", 0, 200, option.MaxRequestCount, true);
                 _settingPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
                 _settingPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
                 _settingPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, true, SetTwitchAccessToken);
@@ -250,6 +252,7 @@ namespace TootTally.Twitch
             public ConfigEntry<bool> EnableCurrentSongCommand { get; set; }
             public ConfigEntry<string> TwitchUsername { get; set; }
             public ConfigEntry<string> TwitchAccessToken { get; set; }
+            public ConfigEntry<float> MaxRequestCount { get; set; }
         }
 
         [Serializable]

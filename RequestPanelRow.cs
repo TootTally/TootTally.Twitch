@@ -63,6 +63,8 @@ namespace TootTally.Twitch
         {
             RequestPanelManager.currentSongID = request.song_id;
             RequestPanelManager.SetTrackToTrackref(_chart.track_ref);
+            for(int i = 0; i < 2; i++)
+                RequestPanelManager.SetTrackToTrackref(_chart.track_ref);
         }
 
         public void DownloadChart()
@@ -87,7 +89,8 @@ namespace TootTally.Twitch
 
                     PopUpNotifManager.DisplayNotif("Reloading Songs...");
                     TootTally.Plugin.Instance.Invoke("ReloadTracks", .5f);
-
+                    var play = GameObjectFactory.CreateCustomButton(_requestRowContainer.transform, Vector2.zero, new Vector2(68, 68), AssetManager.GetSprite("Check64.png"), "PlayButton", PlayChart);
+                    play.transform.SetSiblingIndex(4);
                 }
                 else
                 {

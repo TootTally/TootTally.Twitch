@@ -16,6 +16,8 @@ using BaboonAPI.Hooks.Tracks;
 using TootTally.Utils.Helpers;
 using TrombLoader.CustomTracks;
 using Microsoft.FSharp.Collections;
+using TootTally.CustomLeaderboard;
+using TootTally.TootTallyOverlay;
 
 namespace TootTally.Twitch
 {
@@ -35,7 +37,6 @@ namespace TootTally.Twitch
         public TwitchBot Bot = null;
         private TootTallySettingPage _settingPage;
         public RequestController requestController;
-        private TracksLoaderListener tracksLoaderListener;
         public void LogInfo(string msg) => Logger.LogInfo(msg);
         public void LogError(string msg) => Logger.LogError(msg);
         public void LogDebug(string msg ) => Logger.LogDebug(msg);
@@ -88,7 +89,9 @@ namespace TootTally.Twitch
                 _settingPage.AddToggle("Subs-only Mode", option.SubOnlyMode);
                 _settingPage.AddSlider("Max Request Count", 0, 200, option.MaxRequestCount, true);
                 _settingPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
+                _settingPage.AddLabel("TwitchSpecificUsernameLabel", "Username", 16, TMPro.FontStyles.Normal, TMPro.TextAlignmentOptions.BottomLeft);
                 _settingPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
+                _settingPage.AddLabel("TwitchSpecificAccessTokenLabel", "AccessToken", 16, TMPro.FontStyles.Normal, TMPro.TextAlignmentOptions.BottomLeft);
                 _settingPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, true, SetTwitchAccessToken);
                 _settingPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", delegate () { Application.OpenURL(toottallyTwitchLink); });
                 _settingPage.AddButton("GetAccessToken", new Vector2(450, 50), "Refresh Access Token", delegate ()
@@ -118,15 +121,6 @@ namespace TootTally.Twitch
 
             Harmony.CreateAndPatchAll(typeof(TwitchPatches), PluginInfo.PLUGIN_GUID);
             LogInfo($"Module loaded!");
-        }
-
-        public class TracksLoaderListener : TracksLoadedEvent.Listener
-        {
-            public void OnTracksLoaded(FSharpList<TromboneTrack> value)
-            {
-                RequestPanelManager.Dispose();
-                RequestPanelManager.Initialize();
-            }
         }
 
         private void SetTwitchUsername(string text)
@@ -165,11 +159,6 @@ namespace TootTally.Twitch
             Bot?.Disconnect();
             Bot = null;
             requestController?.Dispose();
-            if (tracksLoaderListener != null)
-            {
-                TracksLoadedEvent.EVENT.Unregister(tracksLoaderListener);
-                tracksLoaderListener = null;
-            }
             GameObject.DestroyImmediate(requestController);
             StopAllCoroutines();
             Harmony.UnpatchID(PluginInfo.PLUGIN_GUID);
@@ -192,11 +181,6 @@ namespace TootTally.Twitch
             [HarmonyPostfix]
             public static void DeInitialize()
             {
-                if (Plugin.Instance.tracksLoaderListener == null)
-                {
-                    Plugin.Instance.tracksLoaderListener = new TracksLoaderListener();
-                    TracksLoadedEvent.EVENT.Register(Plugin.Instance.tracksLoaderListener);
-                }
                 RequestPanelManager.songSelectInstance = null;
             }
 
@@ -242,6 +226,19 @@ namespace TootTally.Twitch
                 RequestPanelManager.songIndex = ___songindex;
                 RequestPanelManager.songTrackref = ___alltrackslist[___songindex].trackref;
             }
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickBack))]
+            [HarmonyPrefix]
+            private static bool OnClickBackSkipIfPanelActive() => ShouldScrollSongs();
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickNext))]
+            [HarmonyPrefix]
+            private static bool OnClickNextSkipIfScrollWheelUsed() => ShouldScrollSongs();
+
+            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPrev))]
+            [HarmonyPrefix]
+            private static bool OnClickBackSkipIfScrollWheelUsed() => ShouldScrollSongs();
+            private static bool ShouldScrollSongs() => RequestPanelManager.ShouldScrollSongs();
         }
 
         public class Options

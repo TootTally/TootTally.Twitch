@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using static TootTally.Twitch.Plugin;
+using Steamworks;
 
 namespace TootTally.Twitch
 {
@@ -25,6 +26,7 @@ namespace TootTally.Twitch
         public static int currentSongID;
         public static int RequestCount => _requestList.Count;
 
+        private static ScrollableSliderHandler _scrollableHandler;
 
         private static RectTransform _containerRect;
         private static CustomAnimation _panelAnimationFG, _panelAnimationBG;
@@ -34,6 +36,7 @@ namespace TootTally.Twitch
         private static GameObject _overlayPanelContainer;
         private static bool _isPanelActive;
         private static bool _isInitialized;
+        private static bool _isAnimating;
         public static void Initialize()
         {
             if (_isInitialized) return;
@@ -53,11 +56,14 @@ namespace TootTally.Twitch
 
             _overlayPanel = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1700, 900), 20f, "TwitchOverlayPanel");
             _overlayPanelContainer = _overlayPanel.transform.Find("FSLatencyPanel/LatencyFG/MainPage").gameObject;
+            _scrollableHandler = _overlayPanelContainer.AddComponent<ScrollableSliderHandler>();
             _overlayPanel.transform.Find("FSLatencyPanel/LatencyFG").localScale = Vector2.zero;
             _overlayPanel.transform.Find("FSLatencyPanel/LatencyBG").localScale = Vector2.zero;
             _containerRect = _overlayPanelContainer.GetComponent<RectTransform>();
             _containerRect.anchoredPosition = Vector2.zero;
             _containerRect.sizeDelta = new Vector2(1700, 900);
+          
+
             var verticalLayout = _overlayPanelContainer.GetComponent<VerticalLayoutGroup>();
             verticalLayout.padding = new RectOffset(20, 20, 20, 20);
             verticalLayout.spacing = 120f;
@@ -87,6 +93,9 @@ namespace TootTally.Twitch
             if (Input.GetKeyDown(KeyCode.F8))
                 TogglePanel();
 
+            if (Input.GetKeyDown(KeyCode.Escape) && _isPanelActive)
+                TogglePanel();
+
             if (_isPanelActive && Input.mouseScrollDelta.y != 0 && _requestRowList.Count >= 6)
                 _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(_containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 35f, MIN_POS_Y, ((_requestRowList.Count - 6f) * 120f) + 120f));
         }
@@ -94,6 +103,7 @@ namespace TootTally.Twitch
         public static void TogglePanel()
         {
             _isPanelActive = !_isPanelActive;
+            _isAnimating = true;
             if (_overlayPanel != null)
             {
                 _panelAnimationBG?.Dispose();
@@ -105,6 +115,7 @@ namespace TootTally.Twitch
                 _panelAnimationFG = AnimationManager.AddNewScaleAnimation(_overlayPanel.transform.Find("FSLatencyPanel/LatencyFG").gameObject, targetVector, animationTime, secondDegreeAnimationFG);
                 _panelAnimationBG = AnimationManager.AddNewScaleAnimation(_overlayPanel.transform.Find("FSLatencyPanel/LatencyBG").gameObject, targetVector, animationTime, secondDegreeAnimationBG, (sender) =>
                 {
+                    _isAnimating = false;
                     if (!_isPanelActive)
                         _overlayPanel.SetActive(_isPanelActive);
                 });
@@ -198,7 +209,6 @@ namespace TootTally.Twitch
                         // Only advance songs if we're not on the same song already
                         songSelectInstance.advanceSongs(i - songIndex, true);
                     }
-                    TogglePanel();
                     return;
                 }
             }
@@ -213,6 +223,8 @@ namespace TootTally.Twitch
         public static bool IsDuplicate(int song_id) => _requestRowList.Any(x => x.request.song_id == song_id);
 
         public static bool IsBlocked(int song_id) => _blockedList.Any(x => x.song_id == song_id);
+
+        public static bool ShouldScrollSongs() => !_isPanelActive && !_isAnimating;
 
         public static void UpdateSaveRequestFile()
         {

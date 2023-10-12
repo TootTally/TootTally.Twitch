@@ -62,7 +62,7 @@ namespace TootTally.Twitch
             _containerRect = _overlayPanelContainer.GetComponent<RectTransform>();
             _containerRect.anchoredPosition = Vector2.zero;
             _containerRect.sizeDelta = new Vector2(1700, 900);
-          
+
 
             var verticalLayout = _overlayPanelContainer.GetComponent<VerticalLayoutGroup>();
             verticalLayout.padding = new RectOffset(20, 20, 20, 20);
@@ -204,10 +204,12 @@ namespace TootTally.Twitch
             {
                 if (songSelectInstance.alltrackslist[i].trackref == trackref)
                 {
-                    if (i - songIndex != 0)
+                    var attempts = 0;
+                    while (i - songIndex != 0 && songSelectInstance.songindex != i && attempts <= 3)
                     {
                         // Only advance songs if we're not on the same song already
                         songSelectInstance.advanceSongs(i - songIndex, true);
+                        attempts++;
                     }
                     return;
                 }

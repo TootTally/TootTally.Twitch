@@ -63,8 +63,6 @@ namespace TootTally.Twitch
         {
             RequestPanelManager.currentSongID = request.song_id;
             RequestPanelManager.SetTrackToTrackref(_chart.track_ref);
-            for(int i = 0; i < 2; i++)
-                RequestPanelManager.SetTrackToTrackref(_chart.track_ref);
         }
 
         public void DownloadChart()
@@ -110,9 +108,7 @@ namespace TootTally.Twitch
 
             public void OnTracksLoaded(FSharpList<TromboneTrack> value)
             {
-                //Dunno why I have to call this twice 
-                //_row.PlayChart();
-                //_row.PlayChart();
+                _row.PlayChart();
                 _row.UnsubscribeLoaderEvent();
             }
         }

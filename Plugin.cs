@@ -107,7 +107,7 @@ namespace TootTally.Twitch
                 {
                     if (Bot == null)
                     {
-                        Instance.StartCoroutine(StartBotCoroutine()); // Start and connect the bot if no bot detected yet
+                        StartBotCoroutine(); // Start and connect the bot if no bot detected yet
                     }
                     else
                     {
@@ -136,7 +136,7 @@ namespace TootTally.Twitch
             option.TwitchAccessToken.Value = text;
         }
 
-        public IEnumerator StartBotCoroutine()
+        public void StartBotCoroutine()
         {
             if (Bot == null)
             {
@@ -147,7 +147,6 @@ namespace TootTally.Twitch
                     PopUpNotifManager.DisplayNotif("Access token successfully refreshed", GameTheme.themeColors.notification.defaultText);
                 }));
             }
-            yield return null;
         }
 
 
@@ -182,11 +181,15 @@ namespace TootTally.Twitch
             public static void DeInitialize()
             {
                 RequestPanelManager.songSelectInstance = null;
+                Instance.StartBotCoroutine();
             }
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.tryToSaveSettings))]
             [HarmonyPostfix]
-            public static void InitializeRequestPanelOnSaveConfig() => InitializeRequestPanel();
+            public static void InitializeRequestPanelOnSaveConfig()
+            {
+                Instance.StartBotCoroutine();
+            }
 
             [HarmonyPatch(typeof(GameController), nameof(GameController.Start))]
             [HarmonyPostfix]
@@ -215,7 +218,6 @@ namespace TootTally.Twitch
                 RequestPanelManager.songIndex = ___songindex;
                 RequestPanelManager.songTrackref = ___alltrackslist[___songindex].trackref;
                 RequestPanelManager.isPlaying = false;
-                Instance.StartCoroutine(Instance.StartBotCoroutine());
             }
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.advanceSongs))]

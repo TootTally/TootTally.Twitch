@@ -27,6 +27,7 @@ namespace TootTally.Twitch
         public static int RequestCount => _requestList.Count;
 
         private static ScrollableSliderHandler _scrollableHandler;
+        private static Slider _slider;
 
         private static RectTransform _containerRect;
         private static CustomAnimation _panelAnimationFG, _panelAnimationBG;
@@ -56,7 +57,13 @@ namespace TootTally.Twitch
 
             _overlayPanel = GameObjectFactory.CreateOverlayPanel(_overlayCanvas.transform, Vector2.zero, new Vector2(1700, 900), 20f, "TwitchOverlayPanel");
             _overlayPanelContainer = _overlayPanel.transform.Find("FSLatencyPanel/LatencyFG/MainPage").gameObject;
-            _scrollableHandler = _overlayPanelContainer.AddComponent<ScrollableSliderHandler>();
+            
+            _slider = new GameObject("TwitchPanelSlider", typeof(Slider)).GetComponent<Slider>();
+            _slider.transform.SetParent(_overlayPanel.transform);
+            _slider.onValueChanged.AddListener(OnScrolling);
+            _scrollableHandler = _slider.gameObject.AddComponent<ScrollableSliderHandler>();
+
+
             _overlayPanel.transform.Find("FSLatencyPanel/LatencyFG").localScale = Vector2.zero;
             _overlayPanel.transform.Find("FSLatencyPanel/LatencyBG").localScale = Vector2.zero;
             _containerRect = _overlayPanelContainer.GetComponent<RectTransform>();
@@ -95,14 +102,17 @@ namespace TootTally.Twitch
 
             if (Input.GetKeyDown(KeyCode.Escape) && _isPanelActive)
                 TogglePanel();
-
-            if (_isPanelActive && Input.mouseScrollDelta.y != 0 && _requestRowList.Count >= 6)
-                _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(_containerRect.anchoredPosition.y + Input.mouseScrollDelta.y * 35f, MIN_POS_Y, ((_requestRowList.Count - 6f) * 120f) + 120f));
         }
 
+        private static void OnScrolling(float value)
+        {
+            _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(value * 35f, MIN_POS_Y, ((_requestRowList.Count - 6f) * 120f) + 120f));
+        }
+        
         public static void TogglePanel()
         {
             _isPanelActive = !_isPanelActive;
+            _scrollableHandler.enabled = _isPanelActive && _requestRowList.Count > 6;
             _isAnimating = true;
             if (_overlayPanel != null)
             {
@@ -129,6 +139,8 @@ namespace TootTally.Twitch
             _requestList.Add(request);
             UpdateSaveRequestFile();
             _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, request));
+            _scrollableHandler.accelerationMult = 8f / _requestRowList.Count;
+            _scrollableHandler.enabled = _requestRowList.Count > 6;
         }
 
         public static void AddToBlockList(int id)
@@ -155,6 +167,7 @@ namespace TootTally.Twitch
             _requestList.Remove(row.request);
             UpdateSaveRequestFile();
             _requestRowList.Remove(row);
+            _slider.value = 0;
         }
 
         public static void Remove(string trackref)

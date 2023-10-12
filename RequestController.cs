@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using TootTally.Graphics;
@@ -11,13 +12,13 @@ namespace TootTally.Twitch
     public class RequestController : MonoBehaviour
     {
         public List<string> RequesterBlacklist { get; set; }
-        private Stack<Notif> NotifStack;
-        private Stack<UnprocessedRequest> RequestStack; // Unfinished request stack, only song ids here
+        private ConcurrentQueue<Notif> NotifQueue;
+        private ConcurrentQueue<UnprocessedRequest> RequestQueue; // Unfinished request stack, only song ids here
 
         public void Awake()
         {
-            NotifStack = new Stack<Notif>();
-            RequestStack = new Stack<UnprocessedRequest>();
+            NotifQueue = new ConcurrentQueue<Notif>();
+            RequestQueue = new ConcurrentQueue<UnprocessedRequest>();
             RequesterBlacklist = new List<string>();
         }
 
@@ -25,7 +26,7 @@ namespace TootTally.Twitch
         {
             if (RequestPanelManager.isPlaying) return;
 
-            if (RequestStack.TryPop(out UnprocessedRequest request))
+            if (RequestQueue.TryDequeue(out UnprocessedRequest request))
             {
                 Instance.LogInfo($"Attempting to get song data for ID {request.song_id}");
                 Instance.StartCoroutine(TootTallyAPIService.GetSongDataFromDB(request.song_id, (songdata) =>
@@ -43,7 +44,7 @@ namespace TootTally.Twitch
                 }));
             }
 
-            if (NotifStack.TryPop(out Notif notif))
+            if (NotifQueue.TryDequeue(out Notif notif))
             {
                 Instance.LogInfo("Attempting to generate notification...");
                 PopUpNotifManager.DisplayNotif(notif.message, notif.color);
@@ -58,7 +59,7 @@ namespace TootTally.Twitch
                 message = message,
                 color = color
             };
-            NotifStack.Push(notif);
+            NotifQueue.Enqueue(notif);
         }
 
         public void RequestSong(int song_id, string requester, bool isSubscriber = false)
@@ -71,7 +72,7 @@ namespace TootTally.Twitch
                     Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song #{song_id} is blocked.");
                     return;
                 }
-                else if (RequestPanelManager.IsDuplicate(song_id) && !RequestStack.Any(x => x.song_id == song_id))
+                else if (RequestPanelManager.IsDuplicate(song_id) && !RequestQueue.Any(x => x.song_id == song_id))
                 {
                     Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song #{song_id} already requested.");
                     return;
@@ -89,16 +90,16 @@ namespace TootTally.Twitch
                 request.requester = requester;
                 Instance.LogInfo($"Accepted request {song_id} by {requester}.");
                 Instance.Bot.client.SendMessage(Instance.Bot.CHANNEL, $"!Song #{song_id} successfully requested.");
-                RequestStack.Push(request);
+                RequestQueue.Enqueue(request);
             }
         }
 
         public void Dispose()
         {
-            NotifStack?.Clear();
-            NotifStack = null;
-            RequestStack?.Clear();
-            RequestStack = null;
+            NotifQueue?.Clear();
+            NotifQueue = null;
+            RequestQueue?.Clear();
+            RequestQueue = null;
             RequesterBlacklist?.Clear();
             RequesterBlacklist = null;
         }

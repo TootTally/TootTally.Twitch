@@ -13,7 +13,7 @@ namespace TootTally.Twitch
 {
     public static class RequestPanelManager
     {
-        private const float MIN_POS_Y = -120;
+        private const float MIN_POS_Y = -40;
         public static GameObject requestRowPrefab;
         public static LevelSelectController songSelectInstance;
         public static int songIndex;
@@ -106,7 +106,7 @@ namespace TootTally.Twitch
 
         private static void OnScrolling(float value)
         {
-            _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, Mathf.Clamp(value * 35f, MIN_POS_Y, ((_requestRowList.Count - 6f) * 120f) + 120f));
+            _containerRect.anchoredPosition = new Vector2(_containerRect.anchoredPosition.x, value * (65f * _requestList.Count) - 40f);
         }
         
         public static void TogglePanel()
@@ -139,7 +139,7 @@ namespace TootTally.Twitch
             _requestList.Add(request);
             UpdateSaveRequestFile();
             _requestRowList.Add(new RequestPanelRow(_overlayPanelContainer.transform, request));
-            _scrollableHandler.accelerationMult = 8f / _requestRowList.Count;
+            _scrollableHandler.accelerationMult = 6f / _requestRowList.Count;
             _scrollableHandler.enabled = _requestRowList.Count > 6;
         }
 

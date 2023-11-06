@@ -86,7 +86,7 @@ namespace TootTally.Twitch
                 _settingPage.AddToggle("Enable Requests Command", option.EnableRequestsCommand);
                 _settingPage.AddToggle("Enable Current Songs Command", option.EnableCurrentSongCommand);
                 _settingPage.AddToggle("Enable Profile Command", option.EnableProfileCommand);
-                _settingPage.AddToggle("Subs-only Mode", option.SubOnlyMode);
+                //_settingPage.AddToggle("Subs-only Mode", option.SubOnlyMode);
                 _settingPage.AddSlider("Max Request Count", 0, 200, option.MaxRequestCount, true);
                 _settingPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
                 _settingPage.AddLabel("TwitchSpecificUsernameLabel", "Username", 16, TMPro.FontStyles.Normal, TMPro.TextAlignmentOptions.BottomLeft);
@@ -140,7 +140,7 @@ namespace TootTally.Twitch
         {
             if (Bot == null)
             {
-                Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) =>
+                Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken(token_info =>
                 {
                     option.TwitchAccessToken.Value = token_info.access_token;
                     Bot = new TwitchBot();
@@ -181,6 +181,12 @@ namespace TootTally.Twitch
             public static void DeInitialize()
             {
                 RequestPanelManager.songSelectInstance = null;
+            }
+
+            [HarmonyPatch(typeof(TootTally.Plugin), nameof(TootTally.Plugin.OnUserLogin))]
+            [HarmonyPostfix]
+            public static void OnUserLoginInitializeBot()
+            {
                 Instance.StartBotCoroutine();
             }
 

@@ -90,20 +90,20 @@ namespace TootTally.Twitch
                 _settingPage.AddSlider("Max Request Count", 0, 200, option.MaxRequestCount, true);
                 _settingPage.AddLabel("TwitchSpecificSettingsLabel", "Twitch Integration", 24); // 20 is the default size for text
                 _settingPage.AddLabel("TwitchSpecificUsernameLabel", "Username", 16, TMPro.FontStyles.Normal, TMPro.TextAlignmentOptions.BottomLeft);
-                _settingPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, false, SetTwitchUsername);
+                _settingPage.AddTextField("Twitch Username", new Vector2(350, 50), 20, option.TwitchUsername.Value, option.TwitchUsername.Description.Description, false, SetTwitchUsername);
                 _settingPage.AddLabel("TwitchSpecificAccessTokenLabel", "AccessToken", 16, TMPro.FontStyles.Normal, TMPro.TextAlignmentOptions.BottomLeft);
-                _settingPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, true, SetTwitchAccessToken);
-                _settingPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", delegate () { Application.OpenURL(toottallyTwitchLink); });
-                _settingPage.AddButton("GetAccessToken", new Vector2(450, 50), "Refresh Access Token", delegate ()
+                _settingPage.AddTextField("Twitch Access Token", new Vector2(350, 50), 20, option.TwitchAccessToken.Value, option.TwitchAccessToken.Description.Description, true, SetTwitchAccessToken);
+                _settingPage.AddButton("AuthorizeTwitchButton", new Vector2(450, 50), "Authorize TootTally on Twitch", "Opens a page to get your auth token", delegate () { Application.OpenURL(toottallyTwitchLink); });
+                _settingPage.AddButton("GetAccessToken", new Vector2(450, 50), "Refresh Access Token", "Refresh the access token if it expired", delegate ()
                 {
-                    Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken((token_info) =>
+                    Instance.StartCoroutine(TootTallyAPIService.GetValidTwitchAccessToken(token_info =>
                     {
                         option.TwitchAccessToken.Value = token_info.access_token;
                         PopUpNotifManager.DisplayNotif("Access token successfully refreshed", GameTheme.themeColors.notification.defaultText);
                     }));
                 });
                 _settingPage.AddLabel("TwitchBotButtons", "Twitch Bot Settings", 24);
-                _settingPage.AddButton("ConnectDisconnectBot", new Vector2(350, 50), "Connect/Disconnect Bot", () =>
+                _settingPage.AddButton("ConnectDisconnectBot", new Vector2(350, 50), "Connect/Disconnect Bot", "Rarely useful if the bot fails to connect after setting the auth token", () =>
                 {
                     if (Bot == null)
                     {

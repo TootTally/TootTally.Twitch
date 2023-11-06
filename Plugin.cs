@@ -71,13 +71,13 @@ namespace TootTally.Twitch
                 // Set your config here by binding them to the related ConfigEntry in your Options class
                 // Example:
                 // Unlimited = config.Bind(CONFIG_FIELD, "Unlimited", DEFAULT_UNLISETTING)
-                EnableRequestsCommand = config.Bind(CONFIG_FIELD, "Enable requests command (!ttr)", true),
-                EnableCurrentSongCommand = config.Bind(CONFIG_FIELD, "Enable current song command (!song)", true),
-                EnableProfileCommand = config.Bind(CONFIG_FIELD, "Enable profile command (!profile)", true),
-                SubOnlyMode = config.Bind(CONFIG_FIELD, "Sub-only requests", false),
-                TwitchUsername = config.Bind(CONFIG_FIELD, "Twitch channel to attach to", ""),
-                TwitchAccessToken = config.Bind(CONFIG_FIELD, "Twitch Access Token", ""),
-                MaxRequestCount = config.Bind(CONFIG_FIELD, "Max Request Count", 50f),
+                EnableRequestsCommand = config.Bind(CONFIG_FIELD, "Enable requests command", true, "Allow people to requests songs using !ttr [songID]"),
+                EnableCurrentSongCommand = config.Bind(CONFIG_FIELD, "Enable current song command", true, "!song command that sends a link to the current song into the chat"),
+                EnableProfileCommand = config.Bind(CONFIG_FIELD, "Enable profile command", true, "!profile command that links your toottally profile into the chat"),
+                SubOnlyMode = config.Bind(CONFIG_FIELD, "Sub-only requests", false, "Only allow subscribers to send requests"),
+                TwitchUsername = config.Bind(CONFIG_FIELD, "Twitch channel to attach to", "", "Paste your twitch username here"),
+                TwitchAccessToken = config.Bind(CONFIG_FIELD, "Twitch Access Token", "", "Paste the access token from the website here"),
+                MaxRequestCount = config.Bind(CONFIG_FIELD, "Max Request Count", 50f, "Maximum request count allowed in queue"),
             };
 
             _settingPage = TootTallySettingsManager.AddNewPage(CONFIG_FIELD, "Twitch Integration Settings", 40, new Color(.1f, .1f, .1f, .1f));
